@@ -19,7 +19,8 @@ trial_totals(
   agg_keys = NULL,
   agg_suffix = NULL,
   keep_variates = FALSE,
-  summary = TRUE
+  summary = TRUE,
+  data_name = NULL
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ trial_totals(
 \item{keep_variates}{whether to preserve individual values (default: FALSE)}
 
 \item{summary}{Include summary statistics if TRUE (default: TRUE)}
+
+\item{data_name}{Data name used to create trials_n, subsets_n and subsets_p nodes if they don't exist in mcmodule (optional)}
 }
 \value{
 Updated mcmodule object containing:

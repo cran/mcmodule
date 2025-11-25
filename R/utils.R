@@ -10,8 +10,16 @@ add_group_id <- function(x, y = NULL, by = NULL) {
   if (!is.null(y)) {
     if (is.null(by)) {
       # Get categorical variables for each dataframe
-      cat_x <- names(x)[vapply(x, function(col) is.character(col) | is.factor(col), logical(1))]
-      cat_y <- names(y)[vapply(y, function(col) is.character(col) | is.factor(col), logical(1))]
+      cat_x <- names(x)[vapply(
+        x,
+        function(col) is.character(col) | is.factor(col),
+        logical(1)
+      )]
+      cat_y <- names(y)[vapply(
+        y,
+        function(col) is.character(col) | is.factor(col),
+        logical(1)
+      )]
 
       # Find intersection of categorical variables
       by <- intersect(cat_x, cat_y)
@@ -20,10 +28,20 @@ add_group_id <- function(x, y = NULL, by = NULL) {
     }
 
     if (!all(by %in% names(x))) {
-      stop(paste0(paste(by[!by %in% names(x)]), " columns not found in ", deparse(substitute(x)),"\n"))
+      stop(paste0(
+        paste(by[!by %in% names(x)]),
+        " columns not found in ",
+        deparse(substitute(x)),
+        "\n"
+      ))
     }
     if (!all(by %in% names(y))) {
-      stop(paste0(paste(by[!by %in% names(y)]), " columns not found in ", deparse(substitute(y)),"\n"))
+      stop(paste0(
+        paste(by[!by %in% names(y)]),
+        " columns not found in ",
+        deparse(substitute(y)),
+        "\n"
+      ))
     }
 
     x[["df"]] <- "x"
@@ -41,7 +59,7 @@ add_group_id <- function(x, y = NULL, by = NULL) {
     x_cols <- names(x)[!names(x) %in% c(by, "df", "g_id", "g_row")]
     x_data <- x[x_cols]
     x_result <- dplyr::bind_cols(x_filtered, x_data)
-    x_result<-x_result[, !duplicated(names(x_result))]
+    x_result <- x_result[, !duplicated(names(x_result))]
     x_result <- dplyr::mutate(x_result, df = NULL)
     x_result <- dplyr::mutate(x_result, g_row = dplyr::cur_group_rows())
     x_result <- dplyr::relocate(x_result, "g_id", "g_row")
@@ -57,7 +75,7 @@ add_group_id <- function(x, y = NULL, by = NULL) {
     y_cols <- names(y)[!names(y) %in% c(by, "df", "g_id", "g_row")]
     y_data <- y[y_cols]
     y_result <- dplyr::bind_cols(y_filtered, y_data)
-    y_result<-y_result[, !duplicated(names(y_result))]
+    y_result <- y_result[, !duplicated(names(y_result))]
     y_result <- dplyr::mutate(y_result, df = NULL)
     y_result <- dplyr::mutate(y_result, g_row = dplyr::cur_group_rows())
     y_result <- dplyr::relocate(y_result, "g_id", "g_row")
@@ -73,9 +91,11 @@ add_group_id <- function(x, y = NULL, by = NULL) {
     group_vars <- by
     x_grouped <- dplyr::group_by(x, dplyr::across(dplyr::all_of(group_vars)))
 
-    x_result <- dplyr::mutate(x_grouped,
-                              g_id = dplyr::cur_group_id(),
-                              g_row = dplyr::cur_group_rows())
+    x_result <- dplyr::mutate(
+      x_grouped,
+      g_id = dplyr::cur_group_id(),
+      g_row = dplyr::cur_group_rows()
+    )
     x_result <- dplyr::relocate(x_result, "g_id", "g_row")
     x_result <- dplyr::ungroup(x_result)
 
@@ -101,8 +121,16 @@ keys_match <- function(x, y, keys_names = NULL) {
   # Define keys_names if not provided
   if (is.null(keys_names)) {
     # Get categorical variables for each dataframe
-    cat_x <- names(x)[vapply(x, function(col) is.character(col) | is.factor(col), logical(1))]
-    cat_y <- names(y)[vapply(y, function(col) is.character(col) | is.factor(col), logical(1))]
+    cat_x <- names(x)[vapply(
+      x,
+      function(col) is.character(col) | is.factor(col),
+      logical(1)
+    )]
+    cat_y <- names(y)[vapply(
+      y,
+      function(col) is.character(col) | is.factor(col),
+      logical(1)
+    )]
 
     # Find intersection of categorical variables
     keys_names <- unique(intersect(cat_x, cat_y))
@@ -115,19 +143,40 @@ keys_match <- function(x, y, keys_names = NULL) {
   keys_x <- keys_list$x[c("g_id", "g_row", "scenario_id", keys_names)]
   keys_y <- keys_list$y[c("g_id", "g_row", "scenario_id", keys_names)]
 
+  # If keys_x and keys_y are identical return them directly
+  if (identical(as.data.frame(keys_x), as.data.frame(keys_y))) {
+    keys_xy <- dplyr::mutate(
+      keys_x,
+      g_row.x = .data$g_row,
+      g_row = NULL
+    )
+    keys_xy <- dplyr::bind_cols(
+      keys_xy,
+      dplyr::transmute(keys_y, g_row.y = .data$g_row)
+    )
+    return(list(x = keys_x, y = keys_y, xy = keys_xy))
+  }
+
   # Group and scenario matching
   keys_xy <- dplyr::full_join(
     keys_x,
     keys_y,
-    by = c("g_id", "scenario_id", keys_names)
+    by = c("g_id", "scenario_id", keys_names),
+    relationship = "many-to-many"
   )
-  keys_xy <- dplyr::relocate(keys_xy, "g_id", "scenario_id", dplyr::all_of(keys_names))
+  keys_xy <- dplyr::relocate(
+    keys_xy,
+    "g_id",
+    "scenario_id",
+    dplyr::all_of(keys_names)
+  )
 
   # Get group ids for baseline scenario (scenario_id = 0)
   temp_xy_0 <- dplyr::full_join(
     keys_xy,
     keys_y,
-    by = c("g_id", "scenario_id", keys_names)
+    by = c("g_id", "scenario_id", keys_names),
+    relationship = "many-to-many"
   )
 
   temp_xy_0 <- dplyr::filter(temp_xy_0, .data$scenario_id == "0")

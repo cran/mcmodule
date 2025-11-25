@@ -41,8 +41,14 @@ suppressMessages({
     # Test automatic categorical variable detection
     result_auto <- add_group_id(df1, df2)
     expect_equal(
-      unique(result_auto$x[order(result_auto$x$g_id), c("g_id", "category", "type")]),
-      unique(result_auto$y[order(result_auto$y$g_id), c("g_id", "category", "type")])
+      unique(result_auto$x[
+        order(result_auto$x$g_id),
+        c("g_id", "category", "type")
+      ]),
+      unique(result_auto$y[
+        order(result_auto$y$g_id),
+        c("g_id", "category", "type")
+      ])
     )
 
     # Test error handling
@@ -50,31 +56,45 @@ suppressMessages({
   })
 
   test_that("keys_match works", {
-  # Test data
-  x <- data.frame(
-    type = c("1", "2"),
-    category = c("a", "b"),
-    scenario_id = c(0, 1)
-  )
+    # Test data
+    x <- data.frame(
+      type = c("1", "2"),
+      category = c("a", "b"),
+      scenario_id = c(0, 1)
+    )
 
-  y <- data.frame(
-    type = c("1", "2"),
-    category = c("c", "d"),
-    scenario_id = c(0, 2)
-  )
+    y <- data.frame(
+      type = c("1", "2"),
+      category = c("c", "d"),
+      scenario_id = c(0, 2)
+    )
 
-  # Automatic matching
-  expect_message(
-    result <- keys_match(x, y),
-    "Group by: type, category"
-  )
+    # Automatic matching
+    expect_message(
+      result <- keys_match(x, y),
+      "Group by: type, category"
+    )
 
-  expect_equal(result$xy$scenario_id, c(0, 1, 0, 2))
+    expect_equal(result$xy$scenario_id, c(0, 1, 0, 2))
 
-  # Match by type
-  result_type <- keys_match(x, y, "type")
-  expect_equal(result_type$xy$g_id, c(1, 2, 2))
+    # Match by type
+    result_type <- keys_match(x, y, "type")
+    expect_equal(result_type$xy$g_id, c(1, 2, 2))
   })
 
+  test_that("keys_match returns keys_x when keys_x and keys_y identical", {
+    x <- data.frame(category = c("a", "b"), val_x = 1:2)
+    y <- data.frame(category = c("a", "b"), val_y = 3:4)
+    res <- keys_match(x, y, keys_names = "category")
+    expect_equal(res$xy$g_row.x, c(1, 2))
+    expect_equal(res$xy$g_row.y, c(1, 2))
+  })
 
+  test_that("keys_match handles non-matching nodes (extra group in y)", {
+    x <- data.frame(category = c("a", "b"), val_x = 1:2)
+    y <- data.frame(category = c("a", "b", "c"), val_y = 3:5)
+    res <- keys_match(x, y, keys_names = "category")
+    expect_equal(res$xy$g_row.x, c(1, 2, NA))
+    expect_equal(res$xy$g_row.y, c(1, 2, 3))
+  })
 })

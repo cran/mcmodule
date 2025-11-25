@@ -1,3 +1,26 @@
+# mcmodule 1.1.1
+
+## New features
+
+* `eval_module()` gains `keys` and `overwrite_keys` arguments to add keys 
+  that aren't in `data_keys` or replace existing keys (#23).
+
+* Core functions (`eval_module()`, `trial_totals()`, `dim_match()`, 
+  `at_least_one()`, `mc_match()`, `create_mcnodes()`, `get_node_list()`) 
+  now support mcnodes with multiple data names, with clear messages 
+  indicating defaults (#19).
+
+## Minor improvements and bug fixes
+
+* `keys_match()` now returns early when keys already match, improving 
+  performance and fixing ocasional bugs #28.
+
+* `create_mcnodes()` and `eval_module()` provide clearer error messages 
+  for invalid or missing data (#18).
+
+* `mc_match()` and `mc_match_data()` include improved scenario baseline 
+  checks and error messages.
+
 # mcmodule 1.1.0
 
 -   **Re-submission to CRAN**: Removed unexported function examples.

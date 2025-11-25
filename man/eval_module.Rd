@@ -2,7 +2,7 @@
 % Please edit documentation in R/eval_module.R
 \name{eval_module}
 \alias{eval_module}
-\title{Evaluate a Monte Carlo Model Expression and create an mcmcmodule}
+\title{Evaluate a Monte Carlo Model Expression and create an mcmodule}
 \usage{
 eval_module(
   exp,
@@ -12,7 +12,9 @@ eval_module(
   summary = FALSE,
   mctable = set_mctable(),
   data_keys = set_data_keys(),
-  match_keys = NULL
+  match_keys = NULL,
+  keys = NULL,
+  overwrite_keys = NULL
 )
 }
 \arguments{
@@ -26,17 +28,22 @@ eval_module(
 
 \item{summary}{Logical; whether to calculate summary statistics}
 
-\item{mctable}{Monte Carlo configuration table}
+\item{mctable}{Reference table for mcnodes, defaults to set_mctable()}
 
-\item{data_keys}{List of key columns for each dataset}
+\item{data_keys}{Data structure and keys, defaults to set_data_keys()}
 
 \item{match_keys}{Keys to match prev_mcmodule mcnodes and data by}
+
+\item{keys}{Optional explicit keys for the input data (character vector)}
+
+\item{overwrite_keys}{Logical or NULL. If NULL (default) it becomes TRUE when
+data_keys is NULL or an empty list; otherwise FALSE.}
 }
 \value{
 An mcmodule object containing data, expressions, and nodes
 }
 \description{
-Takes a set of Monte Carlo model expressions and evaluates them and creates an mcmcmodule
+Takes a set of Monte Carlo model expressions and evaluates them and creates an mcmodule
 containing results and metadata.
 }
 \examples{

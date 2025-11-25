@@ -24,7 +24,10 @@ create_mcnodes <- function(data, mctable = set_mctable(), envir = parent.frame()
   if (!valid_mctable) stop("mctable must contain 'mcnode' and 'mc_func' columns")
 
   # Validate that mctable is not empty
-  if (nrow(mctable) < 1) stop("mctable is empty")
+  if (nrow(mctable) < 1) stop("mctable has 0 rows")
+
+  # Validate that data is not empty
+  if (nrow(data) < 1) stop("data has 0 rows")
 
   # Check if data contains any columns matching mcnode names
   data_mc_inputs <- grepl(paste(paste0("\\<", mctable$mcnode, ".*"), collapse = "|"), names(data))

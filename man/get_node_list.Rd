@@ -8,7 +8,8 @@ get_node_list(
   exp,
   param_names = NULL,
   mctable = set_mctable(),
-  data_keys = set_data_keys()
+  data_keys = set_data_keys(),
+  keys = NULL
 )
 }
 \arguments{
@@ -16,9 +17,11 @@ get_node_list(
 
 \item{param_names}{Optional named vector for parameter renaming}
 
-\item{mctable}{Reference table for  mcnodes, defaults to set_mctable()}
+\item{mctable}{Reference table for mcnodes, defaults to set_mctable()}
 
 \item{data_keys}{Data structure and keys, defaults to set_data_keys()}
+
+\item{keys}{Optional explicit keys for the input data (character vector)}
 }
 \value{
 A list of class "mcnode_list" containing node information

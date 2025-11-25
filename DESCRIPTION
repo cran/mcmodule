@@ -1,6 +1,6 @@
 Package: mcmodule
 Title: Modular Monte Carlo Risk Analysis
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: c(
     person("Natalia", "Ciria", , "nataliaciria@hotmail.com",
            role = c("aut", "cre", "cph"),
@@ -27,7 +27,7 @@ Depends: mc2d, R (>= 3.5)
 LazyData: true
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2025-10-18 05:57:44 UTC; Natalia
+Packaged: 2025-11-25 14:42:21 UTC; Natalia
 Author: Natalia Ciria [aut, cre, cph] (ORCID:
     <https://orcid.org/0009-0006-2669-6634>),
   Alberto Allepuz [ths] (ORCID: <https://orcid.org/0000-0003-3518-1991>),
@@ -35,4 +35,4 @@ Author: Natalia Ciria [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0002-5796-8093>)
 Maintainer: Natalia Ciria <nataliaciria@hotmail.com>
 Repository: CRAN
-Date/Publication: 2025-10-22 18:50:02 UTC
+Date/Publication: 2025-11-25 15:02:05 UTC

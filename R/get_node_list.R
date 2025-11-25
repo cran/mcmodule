@@ -5,12 +5,18 @@
 #'
 #' @param exp An R expression containing model calculations
 #' @param param_names Optional named vector for parameter renaming
-#' @param mctable Reference table for  mcnodes, defaults to set_mctable()
+#' @param mctable Reference table for mcnodes, defaults to set_mctable()
 #' @param data_keys Data structure and keys, defaults to set_data_keys()
+#' @param keys Optional explicit keys for the input data (character vector)
 #'
 #' @return A list of class "mcnode_list" containing node information
-get_node_list <- function(exp, param_names = NULL,
-                          mctable = set_mctable(), data_keys = set_data_keys()) {
+get_node_list <- function(
+  exp,
+  param_names = NULL,
+  mctable = set_mctable(),
+  data_keys = set_data_keys(),
+  keys = NULL
+) {
   module <- gsub("_exp", "", deparse(substitute(exp)))
 
   # Initialize lists and vectors
@@ -35,7 +41,11 @@ get_node_list <- function(exp, param_names = NULL,
     exp4 <- c(strsplit(exp3, split = ",")[[1]])
     exp4 <- exp4[!exp4 %in% ""]
 
-    if(any(suppressWarnings(as.numeric(exp4))%in%c(Inf,-Inf))) warning("Inputs called 'inf' or '-inf' are assumed to be infinite (numeric) and are not parsed as mcnodes")
+    if (any(suppressWarnings(as.numeric(exp4)) %in% c(Inf, -Inf))) {
+      warning(
+        "Inputs called 'inf' or '-inf' are assumed to be infinite (numeric) and are not parsed as mcnodes"
+      )
+    }
     exp5 <- suppressWarnings(exp4[is.na(as.numeric(exp4))])
     inputs <- unique(exp5)
 
@@ -46,10 +56,18 @@ get_node_list <- function(exp, param_names = NULL,
     }
 
     # Filter function inputs
-    capture_fun <- gregexpr('(([A-Za-z.][A-Za-z0-9._]*::)?[A-Za-z.][A-Za-z0-9._]*)\\(', node_exp, perl = TRUE)
+    capture_fun <- gregexpr(
+      '(([A-Za-z.][A-Za-z0-9._]*::)?[A-Za-z.][A-Za-z0-9._]*)\\(',
+      node_exp,
+      perl = TRUE
+    )
     starts <- attr(capture_fun[[1]], "capture.start")[, 1]
-    lens   <- attr(capture_fun[[1]], "capture.length")[, 1]
-    fun_input <- if (length(starts)) substring(node_exp, starts, starts + lens - 1) else character(0)
+    lens <- attr(capture_fun[[1]], "capture.length")[, 1]
+    fun_input <- if (length(starts)) {
+      substring(node_exp, starts, starts + lens - 1)
+    } else {
+      character(0)
+    }
 
     inputs <- inputs[!inputs %in% fun_input]
     all_nodes <- unique(c(all_nodes, node_name, inputs))
@@ -76,13 +94,17 @@ get_node_list <- function(exp, param_names = NULL,
   in_node_list <- list()
   input_nodes <- all_nodes[all_nodes %in% as.character(mctable$mcnode)]
 
-  # Get all column names from each data frame
-  all_inputs <- lapply(data_keys, function(x) {
-    if (!is.null(x$cols)) {
-      return(x$cols)
-    }
-    return(NULL)
-  })
+  # Build list of column names per dataset (safe when data_keys NULL or empty)
+  if (is.null(data_keys) || length(data_keys) == 0) {
+    all_inputs <- list()
+  } else {
+    all_inputs <- lapply(data_keys, function(x) {
+      if (!is.null(x$cols)) {
+        return(x$cols)
+      }
+      return(NULL)
+    })
+  }
 
   if (length(input_nodes) > 0) {
     for (i in 1:length(input_nodes)) {
@@ -95,48 +117,97 @@ get_node_list <- function(exp, param_names = NULL,
         in_node_list[[node_name]][["mc_func"]] <- as.character(mc_row$mc_func)
       }
 
-      in_node_list[[node_name]][["description"]] <- as.character(mc_row$description)
+      in_node_list[[node_name]][["description"]] <- as.character(
+        mc_row$description
+      )
+
+      matched_dataset <- NULL
 
       # Process input columns and datasets
       for (dataset_name in names(all_inputs)) {
-
-        if (is.null(mc_row$from_variable)||is.na(mc_row$from_variable)) {
+        if (is.null(mc_row$from_variable) || is.na(mc_row$from_variable)) {
           # Get matching input columns for current node
           pattern <- paste0("\\<", node_name, "(\\>|[^>]*\\>)")
-          inputs_col <- all_inputs[[dataset_name]][grepl(pattern, all_inputs[[dataset_name]])]
-        }else{
+          inputs_col <- all_inputs[[dataset_name]][grepl(
+            pattern,
+            all_inputs[[dataset_name]]
+          )]
+        } else {
           # Get matching input columns from transformed variable
           pattern <- paste0("\\<", mc_row$from_variable, "(\\>|[^>]*\\>)")
-          inputs_col <- all_inputs[[dataset_name]][grepl(pattern, all_inputs[[dataset_name]])]
+          inputs_col <- all_inputs[[dataset_name]][grepl(
+            pattern,
+            all_inputs[[dataset_name]]
+          )]
           # Add transformation info to node list
-          if(!is.null(mc_row$from_variable)&&!is.na(mc_row$transformation)) in_node_list[[node_name]][["transformation"]] <- mc_row$transformation
-
+          if (!is.null(mc_row$from_variable) && !is.na(mc_row$transformation)) {
+            in_node_list[[node_name]][[
+              "transformation"
+            ]] <- mc_row$transformation
+          }
         }
 
         # Update node list if matching inputs found
         if (length(inputs_col) > 0) {
+          matched_dataset <- dataset_name
           in_node_list[[node_name]][["inputs_col"]] <- inputs_col
           in_node_list[[node_name]][["input_dataset"]] <- dataset_name
-          in_node_list[[node_name]][["keys"]] <- data_keys[[dataset_name]][["keys"]]
+
+          # Determine dataset base keys from data_keys (if available)
+          base_keys <- NULL
+          if (
+            !is.null(data_keys) &&
+              dataset_name %in% names(data_keys) &&
+              !is.null(data_keys[[dataset_name]][["keys"]])
+          ) {
+            base_keys <- data_keys[[dataset_name]][["keys"]]
+          }
+
+          # If explicit keys provided: merge with base_keys if base_keys exist; otherwise use explicit keys
+          if (!is.null(keys)) {
+            if (!is.character(keys)) {
+              stop("keys must be a character vector")
+            }
+            final_keys <- if (!is.null(base_keys)) {
+              unique(c(base_keys, keys))
+            } else {
+              keys
+            }
+          } else {
+            final_keys <- base_keys
+          }
+
+          in_node_list[[node_name]][["keys"]] <- final_keys
         }
       }
 
       in_node_list[[node_name]][["module"]] <- module
       in_node_list[[node_name]][["mc_name"]] <- node_name
 
+      # If no inputs_col matched (no dataset matched) but explicit keys were provided, assign them
+      if (is.null(in_node_list[[node_name]][["keys"]]) && !is.null(keys)) {
+        if (!is.character(keys)) {
+          stop("keys must be a character vector")
+        }
+        in_node_list[[node_name]][["keys"]] <- keys
+      }
+
       # Parameter renaming
       if (node_name %in% param_names) {
         node_name_exp <- names(param_names)[param_names %in% node_name]
-        names(in_node_list)[names(in_node_list) %in% param_names] <- node_name_exp
+        names(in_node_list)[
+          names(in_node_list) %in% param_names
+        ] <- node_name_exp
         all_nodes[all_nodes %in% param_names] <- node_name_exp
       }
     }
   }
 
-
   # Process previous nodes
   prev_node_list <- list()
-  prev_nodes <- all_nodes[!all_nodes %in% c(names(in_node_list), names(out_node_list))]
+  prev_nodes <- all_nodes[
+    !all_nodes %in% c(names(in_node_list), names(out_node_list))
+  ]
 
   if (length(prev_nodes) > 0) {
     for (i in 1:length(prev_nodes)) {
