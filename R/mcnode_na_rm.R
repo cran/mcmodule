@@ -17,8 +17,6 @@
 #' clean_mcnode <- mcnode_na_rm(sample_mcnode)
 #'
 #' @export
-#'
-#' @seealso \code{\link[mc2d]{is.na.mcnode}}
 mcnode_na_rm <- function(mcnode, na_value = 0) {
   replace(mcnode, is.na(mcnode) | is.infinite(mcnode), na_value)
 }

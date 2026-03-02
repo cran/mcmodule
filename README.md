@@ -8,7 +8,7 @@
 
 <!-- badges: end -->
 
-Framework for building modular Monte Carlo risk analysis models. It extends the capabilities of `mc2d` to facilitate working with multiple risk pathways, variates and scenarios. It provides tools to organize risk analysis in independent flexible modules, perform multivariate mcnode operations, automate the creation of mcnodes and visualize risk analysis models.
+Framework for building modular Monte Carlo risk analysis models. It extends the capabilities of `mc2d` to facilitate working with multiple risk pathways, variates and scenarios. It provides tools to organize risk analysis in independent flexible modules, perform multivariate mcnode operations, automate the creation of mcnodes and visualise risk analysis models.
 
 ## Installation
 
@@ -19,7 +19,7 @@ install.packages("mcmodule")
 library("mcmodule")
 ```
 
-Install latest development version from GitHub (requires `devtool` package)
+Install latest development version from GitHub.
 
 ``` r
 # install.packages("devtools")
@@ -83,7 +83,7 @@ example_mcmodule <- eval_module(
 )
 ```
 
-6.  Once you have created a mcmodule object, you can use other package functions to summarize and visualize mcnodes, calculate totals, and combine them with other mcmodules
+6.  Once you have created a mcmodule object, you can use other package functions to summarize and visualise mcnodes, calculate totals, and combine them with other mcmodules
 
 ``` r
 # Summarize the 'result' node
@@ -99,19 +99,19 @@ example_mcmodule<-example_mcmodule%>%
 # Print aggregated 'result'
 example_mcmodule$node_list$result_agg$summary
 
-# Visualize the mcmodule
+# visualise the mcmodule
 mc_network(example_mcmodule, legend = TRUE)
 ```
 
 ![](man/figures/mc_network_example.png)
 
-Further documentation and examples can be found in the [vignette](https://nataliaciria.github.io/mcmodule/articles/mcmodule.html) and in the [introduction](https://nataliaciria.github.io/mcmodule/articles/intro.html) article.
+Further documentation and examples can be found in the [vignette](https://nataliaciria.com/mcmodule/articles/mcmodule.html) and in the [introduction](https://nataliaciria.com/mcmodule/articles/intro.html) article.
 
 ## Citations
 
 If you use `mcmodule` in your research, please cite:
 
-Ciria, N. (2025). mcmodule: Modular Monte Carlo Risk Analysis. R package version 1.1.0. <https://nataliaciria.github.io/mcmodule/>
+Ciria, N. (2025). mcmodule: Modular Monte Carlo Risk Analysis. R package version 1.1.0. <https://nataliaciria.com/mcmodule/>
 
 ## Acknowledgements
 
@@ -120,3 +120,5 @@ Ciria, N. (2025). mcmodule: Modular Monte Carlo Risk Analysis. R package version
 -   [BIOSECURE](https://biosecure.eu/), a European Union’s HORIZON Europe FARM2FORK project
 
 -   [Universitat Autònoma de Barcelona](https://www.uab.cat/)
+
+*Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or REA. Neither the European Union nor the granting authority can be held responsible for them.*

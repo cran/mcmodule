@@ -1,14 +1,14 @@
-#' Example mcmodule object containing Monte Carlo simulation results Animal Imports Risk Assessment
+#' Example Monte Carlo Module for Animal Imports Risk Assessment
 #'
 #' A list containing simulation results for pathogen testing of animal imports
 #' from different origins, including:
-#' - Within-herd prevalence (w_prev)
-#' - Test sensitivity (test_sensi)
-#' - Test origin probability (test_origin)
-#' - Infection probability (inf_a)
-#' - False negative probability (false_neg_a)
-#' - No test probability (no_test_a)
-#' - Non-detection probability (no_detect_a)
+#' - Within-herd prevalence (`w_prev`)
+#' - Test sensitivity (`test_sensi`)
+#' - Test origin probability (`test_origin`)
+#' - Infection probability (`inf_a`)
+#' - False negative probability (`false_neg_a`)
+#' - No test probability (`no_test_a`)
+#' - Non-detection probability (`no_detect_a`)
 #'
 #' @format An mcmodule object with the following components:
 #' \describe{

@@ -1,6 +1,6 @@
 #' Merged Import Data for Risk Assessment
 #'
-#' A dataset combining information about animal imports, pathogen prevalence, and test sensitivity across regions
+#' A dataset combining information about animal imports, pathogen prevalence, and test sensitivity across regions.
 #'
 #' @format ## imports_data
 #' A data frame with 6 rows and 12 columns:

@@ -3,7 +3,7 @@
 \docType{data}
 \name{imports_mcmodule}
 \alias{imports_mcmodule}
-\title{Example mcmodule object containing Monte Carlo simulation results Animal Imports Risk Assessment}
+\title{Example Monte Carlo Module for Animal Imports Risk Assessment}
 \format{
 An mcmodule object with the following components:
 \describe{
@@ -23,13 +23,13 @@ imports_mcmodule
 A list containing simulation results for pathogen testing of animal imports
 from different origins, including:
 \itemize{
-\item Within-herd prevalence (w_prev)
-\item Test sensitivity (test_sensi)
-\item Test origin probability (test_origin)
-\item Infection probability (inf_a)
-\item False negative probability (false_neg_a)
-\item No test probability (no_test_a)
-\item Non-detection probability (no_detect_a)
+\item Within-herd prevalence (\code{w_prev})
+\item Test sensitivity (\code{test_sensi})
+\item Test origin probability (\code{test_origin})
+\item Infection probability (\code{inf_a})
+\item False negative probability (\code{false_neg_a})
+\item No test probability (\code{no_test_a})
+\item Non-detection probability (\code{no_detect_a})
 }
 }
 \keyword{datasets}

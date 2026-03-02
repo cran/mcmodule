@@ -4,14 +4,15 @@
 #' particularly focused on animal disease transmission pathways.
 #'
 #' @format ## imports_mctable
-#' A data frame with 7 rows and 6 columns:
+#' A data frame with 7 rows and 7 columns:
 #' \describe{
 #'   \item{mcnode}{Node identifier used in Monte Carlo simulations}
 #'   \item{description}{Human-readable description of what the node represents}
 #'   \item{mc_func}{R function used for random number generation (e.g., runif, rnorm, rpert)}
 #'   \item{from_variable}{Dependency reference to other variables if applicable}
 #'   \item{transformation}{Mathematical transformations applied to the node values}
-#'   \item{sensi_analysis}{Logical flag indicating if node is included in sensitivity analysis}
+#'   \item{sensi_baseline}{Parameters for baseline mock distribution without uncertainty}
+#'   \item{sensi_variation}{OAT variation expression using 'value' placeholder}
 #' }
 #'
 #' @source Simulated data for demonstration purposes

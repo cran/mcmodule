@@ -2,16 +2,25 @@
 % Please edit documentation in R/set_mctable.R
 \name{check_mctable}
 \alias{check_mctable}
-\title{Checks mctable data}
+\title{Validate and Prepare mctable Data Frame}
 \usage{
 check_mctable(data)
 }
 \arguments{
-\item{data}{A data frame containing MC table information. Must contain an 'mcnode' column.}
+\item{data}{(data frame). mctable with \code{mcnode} column (required) and optionally
+\code{mc_func}, \code{description}, \code{from_variable}, \code{transformation}, \code{sensi_baseline},
+and \code{sensi_variation}. Default: required.}
 }
 \value{
-A data frame with the standard mctable structure
+The validated \code{data} frame with all standard mctable columns present,
+with missing optional columns filled as \code{NA}.
 }
 \description{
-Checks mctable data
+Validates that an mctable contains required columns (\code{mcnode}, \code{mc_func}),
+issues warnings for missing columns, and auto-fills missing optional columns
+with \code{NA}.
+}
+\details{
+If \code{mc_func} is missing, all nodes are treated as deterministic (no uncertainty).
+Optional columns are auto-filled with \code{NA} if absent.
 }

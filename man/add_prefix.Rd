@@ -2,23 +2,25 @@
 % Please edit documentation in R/add_prefix.R
 \name{add_prefix}
 \alias{add_prefix}
-\title{Add Prefix to Node Names}
+\title{Add Prefix to mcnode Names}
 \usage{
 add_prefix(mcmodule, prefix = NULL, rewrite_module = NULL)
 }
 \arguments{
-\item{mcmodule}{An mcmodule or a node_list object}
+\item{mcmodule}{(mcmodule or list). mcmodule object or node_list to prefix.}
 
-\item{prefix}{String to add as prefix of the new mcmodule mcnodes, defaults to mcmodule name}
+\item{prefix}{(character, optional). Prefix to add to node names; defaults to
+mcmodule name. Default: NULL.}
 
-\item{rewrite_module}{Name of a module to rewrite prefixes}
+\item{rewrite_module}{(character, optional). Module name to rewrite prefixes for.
+Default: NULL.}
 }
 \value{
-A mcmodule with new prefixes in node_list names
+The mcmodule with prefixed node names.
 }
 \description{
-Adds a prefix to node_list names and all input nodes.
-Preserves previous prefixes unless rewrite_module argument is specified.
+Adds a prefix to node names and their input references. Existing prefixes are
+preserved to avoid breaking references.
 }
 \examples{
 print(names(imports_mcmodule$node_list))

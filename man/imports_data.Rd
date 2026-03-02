@@ -32,6 +32,6 @@ Simulated data for demonstration purposes
 imports_data
 }
 \description{
-A dataset combining information about animal imports, pathogen prevalence, and test sensitivity across regions
+A dataset combining information about animal imports, pathogen prevalence, and test sensitivity across regions.
 }
 \keyword{datasets}

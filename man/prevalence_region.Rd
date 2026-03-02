@@ -3,7 +3,7 @@
 \docType{data}
 \name{prevalence_region}
 \alias{prevalence_region}
-\title{Regional Prevalence Data}
+\title{Regional Pathogen Prevalence Data}
 \format{
 \subsection{prevalence_region}{
 
@@ -26,6 +26,6 @@ Simulated data for demonstration purposes
 prevalence_region
 }
 \description{
-A dataset containing prevalence information for two pathogens across three regions
+A dataset containing prevalence information for two pathogens across three regions.
 }
 \keyword{datasets}

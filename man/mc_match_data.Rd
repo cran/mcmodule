@@ -2,28 +2,34 @@
 % Please edit documentation in R/dim_match.R
 \name{mc_match_data}
 \alias{mc_match_data}
-\title{Match Monte Carlo Node with other data frame}
+\title{Match Monte Carlo Node with Data Frame}
 \usage{
 mc_match_data(mcmodule, mc_name, data, keys_names = NULL)
 }
 \arguments{
-\item{mcmodule}{Monte Carlo module}
+\item{mcmodule}{(mcmodule object). Module containing node.}
 
-\item{mc_name}{Node name}
+\item{mc_name}{(character). Node name.}
 
-\item{data}{Data frame containing keys to match with}
+\item{data}{(data frame). Data to match with mcnode.}
 
-\item{keys_names}{Names of key columns}
+\item{keys_names}{(character vector, optional). Column names for matching.
+Default: NULL.}
 }
 \value{
-List containing matched node, matched data and combined keys (keys_xy
+A list containing matched mcnode, matched data, and combined keys
+(\code{keys_xy}).
 }
 \description{
-Matches an mcnode with a data frame by:
+Matches an mcnode with a data frame by aligning groups, scenarios, or adding
+missing groups across different scenarios.
+}
+\details{
+Matching proceeds in order:
 \enumerate{
-\item Group matching - Same scenarios but different group order
-\item Scenario matching - Same groups but different scenarios
-\item Null matching - Add missing groups across different scenarios
+\item Group matching — same scenarios but different group order
+\item Scenario matching — same groups but different scenarios
+\item Null matching — add missing groups across different scenarios
 }
 }
 \examples{

@@ -1,42 +1,129 @@
-# mcmodule 1.1.1
+# mcmodule 1.2.0
+
+## Breaking changes
+
+* `create_mcnodes()` no longer automatically calculates `rpert()` mode when not
+  provided. This was not widely used and lacked transparency.
 
 ## New features
 
-* `eval_module()` gains `keys` and `overwrite_keys` arguments to add keys 
-  that aren't in `data_keys` or replace existing keys (#23).
+* New `mc_filter()` filters mcnodes and metadata within mcmodules or using
+  mcnode and data (#53).
 
-* Core functions (`eval_module()`, `trial_totals()`, `dim_match()`, 
-  `at_least_one()`, `mc_match()`, `create_mcnodes()`, `get_node_list()`) 
-  now support mcnodes with multiple data names, with clear messages 
-  indicating defaults (#19).
+* New `mc_plot()` visualises Monte Carlo results with support for filters and
+  color mapping. This function is experimental and may change in future
+  versions (#4).
+
+* New `mcmodule_info()` provides comprehensive information about mcmodule
+  structure (#43).
+
+* New `mcmodule_corr()` calculates correlation matrices for mcmodule variates
+  (#48).
+
+* New `mcmodule_converg()` assesses convergence of Monte Carlo simulations
+  (#50).
+
+* New `mcmodule_to_matrices()` converts mcmodules to matrix format (#3).
+
+* New `mcmodule_to_mc()` adapts mcmodules to mc2d mc objects with optional
+  aggregation of variates (#3).
+
+* `eval_module()` now supports `mcstoc()` and `mcdata()` calls directly within
+  expressions, with proper `nvariates` handling (#32, #42).
+
+* New `which_mcnode()` function, with specific wrapers for NA (`which_mcnode_na()`) 
+  and Inf ()`which_mcnode_inf())` detection (#35).
 
 ## Minor improvements and bug fixes
 
-* `keys_match()` now returns early when keys already match, improving 
-  performance and fixing ocasional bugs #28.
+* `add_prefix()` no longer has issues when mcmodule uses pipes (#51).
 
-* `create_mcnodes()` and `eval_module()` provide clearer error messages 
+* `add_prefix()` and `combine_modules()` now handle absent module metadata in
+  nodes.
+
+* `create_mcnodes()` now handles argument ordering and issues warnings for 
+  multiple column matches (#34).
+
+* `eval_module()` improves handling of mcnode creation from data when nodes are
+  not in mctable or prev_mcmodule (#32).
+
+* `get_node_list()` now uses custom AST traversal parser and improves mcnode 
+  ordering for better network visualization(#39, #40).
+
+* `mc_network()` fixes bug related to unprefixed inputs in trial_totals output nodes.
+
+* `trial_totals()` now combines keys from all inputs, not just the main
+  mc_name.
+
+* `eval_module()`and `set_mctable()`now can use `sensi_baseline` and `sensi_variation` 
+  to perfrom One-At-a-Time sensitivity analysis. This will be further developed in future
+  releases (#49). 
+
+* Not exported functions `mc_summary_keys()` and `node_list_summary()` have been
+removed.
+
+* The distinction between "exp" and "module" terminology has been clarified throughout the package.
+
+* Function documentation has been extended and harmonised.
+
+* Documentation updated to clarify use of `mcstoc()` and `mcdata()` within
+  expressions in `eval_module()` (#32, #42).
+
+* Vignettes updated to document new analysis functions and features (#3, #4,
+  #32, #48, #49, #50).
+
+* Website links updated to <https://nataliaciria.com/mcmodule/>.
+
+# mcmodule 1.1.1
+
+* `eval_module()` gains `keys` and `overwrite_keys` arguments to add keys
+  that aren't in `data_keys` or replace existing keys (#23).
+
+* `keys_match()` now returns early when keys already match, improving
+  performance and fixing occasional bugs (#28).
+
+* Core functions (`eval_module()`, `trial_totals()`, `dim_match()`,
+  `at_least_one()`, `mc_match()`, `create_mcnodes()`, `get_node_list()`)
+  now support mcnodes with multiple data names, with clear messages
+  indicating defaults (#19).
+
+* `create_mcnodes()` and `eval_module()` provide clearer error messages
   for invalid or missing data (#18).
 
-* `mc_match()` and `mc_match_data()` include improved scenario baseline 
+* `mc_match()` and `mc_match_data()` include improved scenario baseline
   checks and error messages.
 
 # mcmodule 1.1.0
 
--   **Re-submission to CRAN**: Removed unexported function examples.
+* Re-submission to CRAN. Removed unexported function examples.
 
--   **Bug Fixes:** Fixed missing "agg_suffix" handling, improved dimension matching for aggregated nodes, resolved prefix issues in combined probability nodes.
+* `eval_module()` gains `match_keys` parameter for flexible data-mcnode
+  matching.
 
--   **Feature Enhancements:** Added "match_keys" parameter to `eval_module()` for flexible data-mcnode matching, implemented multiple "prev_mcmodule" data names support in `eval_module()`, and improved R function handling within mcmodule expressions. Enhanced `trial_totals()` to support "agg_suffix" skipping, improved agg_keys combination with `at_least_one()`, and added NA removal in key columns
+* `eval_module()` now supports multiple `prev_mcmodule` data names.
 
--   **Documentation:** Updated documentation and improved error messages for missing prev_nodes and mc_keys handling
+* `eval_module()` improves R function handling within mcmodule expressions.
 
--   **Testing**: Added tests for totals custom names and various dimension matching scenarios
+* `trial_totals()` now supports `agg_suffix` skipping.
+
+* `at_least_one()` improves agg_keys combination.
+
+* Fixed missing `agg_suffix` handling.
+
+* Fixed dimension matching for aggregated nodes.
+
+* Fixed prefix issues in combined probability nodes.
+
+* NA removal added in key columns.
+
+* Added tests for totals custom names and various dimension matching scenarios.
 
 # mcmodule 1.0.1
 
--   **Re-submission to CRAN**: Removed unexported function examples, replaced "dontrun" with "donttest", added vignette link to DESCRIPTION, and included citation file.
+* Re-submission to CRAN. Removed unexported function examples, replaced
+  `dontrun` with `donttest`, added vignette link to DESCRIPTION, and included
+  citation file.
 
 # mcmodule 1.0.0
 
--   Initial CRAN submission.
+* Initial CRAN submission.

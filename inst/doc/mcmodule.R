@@ -157,8 +157,29 @@ imports_exp <- quote({
 })
 
 ## -----------------------------------------------------------------------------
+# Example expression with mcnodes created on-the-fly
+imports_exp_inline <- quote({
+  # Probability that an animal in an infected herd is infected
+  infected <- w_prev
+  
+  # Create a clinic sensitivity parameter directly in the expression
+  # (no need to specify nvariates, it's inferred from data rows)
+  clinic_sensi <- mcstoc(runif, min = 0.6, max = 0.8)
+  
+  # Probability an animal is tested and is a false negative
+  # Now accounting for both test sensitivity and clinic sensitivity
+  false_neg <- infected * test_origin * (1 - test_sensi) * (1 - clinic_sensi)
+  
+  # Probability an animal is not tested but detected at clinic
+  no_test <- infected * (1 - test_origin) * (1 - clinic_sensi)
+  
+  # Probability an animal is not detected
+  no_detect <- false_neg + no_test
+})
+
+## -----------------------------------------------------------------------------
 imports <- eval_module(
-  exp = c(imports = imports_exp),
+  exp = c(imports = imports_exp_inline),
   data = imports_data,
   mctable = imports_mctable,
   data_keys = imports_data_keys
@@ -179,6 +200,31 @@ mc_network(imports, legend = TRUE)
 
 ## -----------------------------------------------------------------------------
 mc_summary(mcmodule = imports, mc_name = "no_detect")
+
+## -----------------------------------------------------------------------------
+# Filter for pathogen a only
+imports <- mc_filter(
+  imports,
+  "no_detect",
+  pathogen == "a",
+  name = "no_detect_pathogen_a"
+)
+
+# View the filtered results
+imports$node_list$no_detect_pathogen_a$summary
+
+## -----------------------------------------------------------------------------
+# Filter for pathogen b from nord region
+imports <- mc_filter(
+  imports,
+  "no_detect",
+  pathogen == "b",
+  origin == "nord",
+  name = "no_detect_b_nord"
+)
+
+# View the filtered results
+imports$node_list$no_detect_b_nord$summary
 
 ## -----------------------------------------------------------------------------
 # Probability of at least one imported animal from an infected herd is not detected
@@ -281,10 +327,7 @@ transmission_data_keys <- list(transmission_data = list(
 transmission_mctable <- data.frame(
   mcnode = c("inf_dc"),
   description = c("Probability of infection via direct contact"),
-  mc_func = c("runif"),
-  from_variable = c(NA),
-  transformation = c(NA),
-  sensi_analysis = c(FALSE)
+  mc_func = c("runif")
 )
 dir_contact_exp <- quote({
   dir_contact <- no_detect * inf_dc
@@ -306,6 +349,47 @@ intro <- at_least_one(intro, c("no_detect", "dir_contact"), name = "total")
 intro$node_list$total$summary
 
 mc_network(intro, legend = TRUE)
+
+## -----------------------------------------------------------------------------
+info <- mcmodule_info(intro)
+
+# Check if module is combined or raw
+info$is_combined
+
+# Number of component modules
+info$n_modules
+
+# Module and expression information
+info$module_exp_data
+
+# Keys for each variate
+head(info$data_keys)
+
+# Global key names
+info$global_keys
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Calculate correlations using Spearman's method (default)
+# cor_results <- mcmodule_corr(imports)
+# 
+# # View correlation results
+# head(cor_results)
+# 
+# # Use different correlation method
+# cor_pearson <- mcmodule_corr(imports, method = "pearson")
+# cor_kendall <- mcmodule_corr(imports, method = "kendall")
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Check convergence with default settings
+# converg_results <- mcmodule_converg(imports)
+# 
+# # Custom convergence analysis
+# # Check the last 10% of iterations with stricter threshold
+# converg_strict <- mcmodule_converg(
+#   imports,
+#   from_quantile = 0.90,
+#   conv_threshold = 0.01
+# )
 
 ## -----------------------------------------------------------------------------
 sample_mcnode <- mcstoc(runif,

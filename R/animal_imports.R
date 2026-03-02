@@ -1,6 +1,6 @@
 #' Example Animal Import Data
 #'
-#' A dataset containing information about animal imports from three different regions
+#' A dataset containing information about animal imports from three different regions.
 #'
 #' @format ## animal_imports
 #' A data frame with 3 rows and 4 columns:

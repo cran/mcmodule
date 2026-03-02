@@ -2,7 +2,7 @@
 % Please edit documentation in R/mc_network.R
 \name{visNetwork_nodes}
 \alias{visNetwork_nodes}
-\title{Generate Network Node Table for Visualization}
+\title{Generate Formatted Network Node Table for Visualisation}
 \usage{
 visNetwork_nodes(
   mcmodule,
@@ -13,27 +13,23 @@ visNetwork_nodes(
 )
 }
 \arguments{
-\item{mcmodule}{An mcmodule object containing the network structure}
+\item{mcmodule}{(mcmodule object). Module containing network structure.}
 
-\item{variate}{Integer specifying which variate to extract (default: 1)}
+\item{variate}{(integer). Which variate to extract. Default: 1.}
 
-\item{color_pal}{Custom color palette for nodes (optional)}
+\item{color_pal}{(character vector, optional). Custom colour palette for nodes.
+Default: NULL.}
 
-\item{color_by}{Column name to determine node colors (optional)}
+\item{color_by}{(character, optional). Column name to determine node colours.
+Default: NULL.}
 
-\item{inputs}{Include non-node inputs: data-sets, data-frames and columns (optional)}
+\item{inputs}{(logical). If TRUE, include non-node inputs. Default: FALSE.}
 }
 \value{
-A data frame formatted for visNetwork with columns:
-\itemize{
-\item id: Unique node identifier
-\item color: Node color based on type/category
-\item grouping: Module association
-\item expression: Node expression or type
-\item title: Hover text containing node details
-}
+A data frame formatted for visNetwork with columns: id, label, color,
+grouping, expression, and title (hover text).
 }
 \description{
-Creates a formatted node table for visualization with visNetwork.
-Includes styling and formatting for network visualization.
+Creates a formatted node table for visualisation with visNetwork.
+Includes styling and formatting for interactive network display.
 }

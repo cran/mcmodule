@@ -1,12 +1,12 @@
-#' Combine Two Modules
+#' Combine Two mcmodule Objects
 #'
-#' @description
-#' Combines two mcmodules into a single mcmodule by merging their data and components.
+#' Combines two mcmodule objects into a single mcmodule by merging their
+#' data and node lists.
 #'
-#' @param mcmodule_x First module to combine
-#' @param mcmodule_y Second module to combine
+#' @param mcmodule_x (mcmodule object). First module.
+#' @param mcmodule_y (mcmodule object). Second module.
 #'
-#' @return A combined mcmodule object
+#' @return An mcmodule object with combined data and node lists.
 #'
 #' @examples
 #' module_x <- list(
@@ -41,7 +41,7 @@ combine_modules <- function(mcmodule_x, mcmodule_y) {
     mcmodule$data <- mcmodule_x$data
   } else {
     mcmodule$data <- unique(c(mcmodule_x$data, mcmodule_y$data))
-    names(mcmodule$data)<-unique(names(c(mcmodule_x$data, mcmodule_y$data)))
+    names(mcmodule$data) <- unique(names(c(mcmodule_x$data, mcmodule_y$data)))
   }
 
   # Combine model expressions
@@ -51,9 +51,22 @@ combine_modules <- function(mcmodule_x, mcmodule_y) {
   )
   names(mcmodule$exp) <- c(name_x, name_y)
 
+  # Ensure node_list module names are set
+  mcmodule_x$node_list <- lapply(mcmodule_x$node_list, function(node) {
+    if (is.null(node$module) || node$module == ".") {
+      node$module <- name_x
+    }
+    node
+  })
+  mcmodule_y$node_list <- lapply(mcmodule_y$node_list, function(node) {
+    if (is.null(node$module) || node$module == ".") {
+      node$module <- name_y
+    }
+    node
+  })
+
   # Combine node lists and modules
   mcmodule$node_list <- c(mcmodule_x$node_list, mcmodule_y$node_list)
-  mcmodule$modules <- unique(c(mcmodule_x$modules, mcmodule_y$modules))
 
   # Set class and return
   class(mcmodule) <- "mcmodule"

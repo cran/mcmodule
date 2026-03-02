@@ -7,11 +7,14 @@
 reset_data_keys()
 }
 \value{
-No return value, resets data keys
+NULL (invisibly). Clears global data_keys.
 }
 \description{
-Resets the data model to an empty list
+Reset Global Data Keys
+
+Clears and resets the global data keys to an empty state.
 }
 \examples{
 reset_data_keys()
+
 }

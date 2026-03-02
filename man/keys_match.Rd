@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{keys_match}
 \alias{keys_match}
-\title{Match and align keys between two datasets}
+\title{Match and Align Keys Between Datasets}
 \usage{
 keys_match(x, y, keys_names = NULL)
 }
@@ -14,11 +14,11 @@ keys_match(x, y, keys_names = NULL)
 \item{keys_names}{Names of columns to use as matching keys. If NULL, uses common columns}
 }
 \value{
-List containing:
+A list containing:
 \item{x}{First dataset with group IDs}
 \item{y}{Second dataset with group IDs}
 \item{xy}{Matched datasets with aligned group and scenario IDs}
 }
 \description{
-Match and align keys between two datasets
+Matches and aligns keys between two datasets for downstream operations.
 }

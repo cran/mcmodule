@@ -2,7 +2,7 @@
 % Please edit documentation in R/totals.R
 \name{at_least_one}
 \alias{at_least_one}
-\title{Combined Probability of Events (At least one)}
+\title{Combine Probabilities Assuming Independence}
 \usage{
 at_least_one(
   mcmodule,
@@ -14,25 +14,27 @@ at_least_one(
 )
 }
 \arguments{
-\item{mcmodule}{Module containing node list and input data frames}
+\item{mcmodule}{(mcmodule object). Module containing node list and data frames.}
 
-\item{mc_names}{Vector of node names to combine}
+\item{mc_names}{(character vector). Node names to combine.}
 
-\item{name}{Optional custom name for combined node (default: NULL)}
+\item{name}{(character, optional). Custom name for combined node.
+If NULL, auto-generated. Default: NULL.}
 
-\item{all_suffix}{Suffix for combined node name (default: "all")}
+\item{all_suffix}{(character). Suffix for auto-generated node name.
+Default: "all".}
 
-\item{prefix}{Optional prefix for output node name (default: NULL)}
+\item{prefix}{(character, optional). Prefix for output node name. Default: NULL.}
 
-\item{summary}{Whether to calculate summary statistics (default: TRUE)}
+\item{summary}{(logical). If TRUE, calculate summary statistics. Default: TRUE.}
 }
 \value{
-Updated mcmodule with new combined probability node
+Updated mcmodule with new combined probability node.
 }
 \description{
-Combines probabilities of multiple events assuming independence,
-using the formula P(A or B) = 1 - (1-P(A))*(1-P(B)).
-It matches dimensions automatically.
+Combines probabilities of multiple independent events using the formula:
+P(at least one) = 1 - (1-P(A)) * (1-P(B)) * ... Automatically matches
+dimensions and keys.
 }
 \examples{
 module <- list(

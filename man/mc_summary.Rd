@@ -2,7 +2,7 @@
 % Please edit documentation in R/mc_summary.R
 \name{mc_summary}
 \alias{mc_summary}
-\title{Compute summary statistics for an mcnode object}
+\title{Summarise Monte Carlo Node Values}
 \usage{
 mc_summary(
   mcmodule = NULL,
@@ -15,35 +15,39 @@ mc_summary(
 )
 }
 \arguments{
-\item{mcmodule}{An mcmodule object containing the node to summarize}
+\item{mcmodule}{(mcmodule object, optional). Module containing the node.
+Default: NULL.}
 
-\item{mc_name}{Character string specifying the name of the mcnode in the module}
+\item{mc_name}{(character, optional). Name of the mcnode in the module.}
 
-\item{keys_names}{Vector of column names to use as keys for grouping (default: NULL)}
+\item{keys_names}{(character vector, optional). Column names for grouping.
+Default: NULL.}
 
-\item{data}{Optional data frame containing the input data (default: NULL)}
+\item{data}{(data frame, optional). Input data frame. Default: NULL.}
 
-\item{mcnode}{Optional mcnode object to summarize directly (default: NULL)}
+\item{mcnode}{(mcnode object, optional). mcnode to summarise directly. Default: NULL.}
 
-\item{sep_keys}{Logical; if TRUE, keeps keys in separate columns (default: TRUE)}
+\item{sep_keys}{(logical). If TRUE, keep keys in separate columns; if FALSE,
+combine into single column. Default: TRUE.}
 
-\item{digits}{Integer indicating number of significant digits for rounding (default: NULL)}
+\item{digits}{(integer, optional). Number of significant digits for rounding.
+Default: NULL.}
 }
 \value{
-A data frame containing summary statistics with columns:
+A data frame with summary statistics for each mcnode variate.
+Columns include:
 \itemize{
-\item mc_name: Name of the mcnode
-\item keys: Grouping variables (if sep_keys=FALSE) or individual key columns (if sep_keys=TRUE)
-\item Summary statistics including:
-\itemize{
-\item mean: Average value
-\item sd: Standard deviation
-\item Various quantiles (2.5\%, 25\%, 50\%, 75\%, 97.5\%)
-}
+\item mc_name: Node name.
+\item Key columns (if sep_keys = TRUE) or single keys column (if FALSE).
+\item mean: Average value.
+\item sd: Standard deviation.
+\item Quantile columns (2.5\%, 25\%, 50\%, 75\%, 97.5\%).
 }
 }
 \description{
-Compute summary statistics for an mcnode object
+Computes summary statistics for an mcnode object, including mean,
+standard deviation, and quantiles. Can be called with an mcmodule and
+node name, or directly with an mcnode and data frame.
 }
 \details{
 This function can be called in two ways:

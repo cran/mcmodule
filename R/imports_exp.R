@@ -1,4 +1,4 @@
-#' Expression for calculating import infection probability
+#' Expression for Calculating Import Infection Probability
 #'
 #' @description
 #' A quoted R expression that calculates the probability of importing an infected

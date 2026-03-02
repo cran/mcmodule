@@ -2,7 +2,7 @@
 % Please edit documentation in R/totals.R
 \name{agg_totals}
 \alias{agg_totals}
-\title{Aggregate Across Groups}
+\title{Aggregate mcnode Values Across Groups}
 \usage{
 agg_totals(
   mcmodule,
@@ -17,36 +17,35 @@ agg_totals(
 )
 }
 \arguments{
-\item{mcmodule}{mcmodule object containing nodes and data}
+\item{mcmodule}{(mcmodule object). Module containing node list and data.}
 
-\item{mc_name}{name of node to aggregate}
+\item{mc_name}{(character). Name of node to aggregate.}
 
-\item{agg_keys}{grouping variables for aggregation}
+\item{agg_keys}{(character vector, optional). Column names for grouping.
+If NULL, defaults to "scenario_id". Default: NULL.}
 
-\item{agg_suffix}{Suffix for aggregated node name (default: "agg")}
+\item{agg_suffix}{(character, optional). Suffix for aggregated node name.
+Default: "agg".}
 
-\item{prefix}{Optional prefix for output node name - includes metadata as add_prefix() (default: NULL)}
+\item{prefix}{(character, optional). Prefix for output node name. Default: NULL.}
 
-\item{name}{Custom name for output node (optional)}
+\item{name}{(character, optional). Custom name for output node. Default: NULL.}
 
-\item{summary}{whether to include summary statistics (default: TRUE)}
+\item{summary}{(logical). If TRUE, include summary statistics. Default: TRUE.}
 
-\item{keep_variates}{whether to preserve individual values (default: FALSE)}
+\item{keep_variates}{(logical). If TRUE, preserve individual variate values.
+Default: FALSE.}
 
-\item{agg_func}{aggregation method ("prob", "sum", "avg", or NULL)}
+\item{agg_func}{(character, optional). Aggregation method: "prob" (combined
+probability), "sum", "avg", or NULL (automatic). Default: NULL.}
 }
 \value{
 mcmodule with new aggregated node added
 }
 \description{
-Combines node values across specified grouping variables using different aggregation methods.
-The aggregation method can be specified via agg_func parameter:
-\itemize{
-\item "prob": Combined probability assuming independence
-\item "sum": Sum of values
-\item "avg": Average of values
-\item NULL: defaults to "sum" if mc_name ends in "_n", else defaults to "prob"
-}
+Aggregates node values across grouping variables using various methods
+(combined probability, sum, mean, or automatic selection). Returns an
+updated mcmodule with new aggregated node.
 }
 \examples{
 imports_mcmodule <- agg_totals(

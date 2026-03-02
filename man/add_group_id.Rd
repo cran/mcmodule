@@ -2,20 +2,23 @@
 % Please edit documentation in R/utils.R
 \name{add_group_id}
 \alias{add_group_id}
-\title{Add Group IDs to Data Frames}
+\title{Add Group Identifiers to Data Frame}
 \usage{
 add_group_id(x, y = NULL, by = NULL)
 }
 \arguments{
-\item{x}{First dataset}
+\item{x}{(data frame). First dataset.}
 
-\item{y}{Optional second dataset}
+\item{y}{(data frame, optional). Second dataset. If provided, aligns with \code{x}.
+Default: NULL.}
 
-\item{by}{Grouping variables}
+\item{by}{(character vector, optional). Column names for grouping.
+If NULL, auto-detected from categorical columns. Default: NULL.}
 }
 \value{
-Dataframe or list of dataframes with added group IDs
+Data frame or list of data frames with added group identifiers (g_id, g_row).
 }
 \description{
-Add Group IDs to Data Frames
+Adds group IDs for matching and alignment between data frames.
 }
+\keyword{internal}

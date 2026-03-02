@@ -2,7 +2,7 @@
 % Please edit documentation in R/mc_network.R
 \name{mc_network}
 \alias{mc_network}
-\title{Create Interactive Network Visualization}
+\title{Create Interactive Network Visualisation}
 \usage{
 mc_network(
   mcmodule,
@@ -14,31 +14,30 @@ mc_network(
 )
 }
 \arguments{
-\item{mcmodule}{An mcmodule object}
+\item{mcmodule}{(mcmodule object). Module containing network to visualise.}
 
-\item{variate}{Integer specifying which variate to visualize (default: 1)}
+\item{variate}{(integer). Which variate to visualise. Default: 1.}
 
-\item{color_pal}{Custom color palette for nodes (optional)}
+\item{color_pal}{(character vector, optional). Custom colour palette for nodes.
+Default: NULL.}
 
-\item{color_by}{Column name to determine node colors (optional)}
+\item{color_by}{(character, optional). Column name to determine node colours.
+Default: NULL.}
 
-\item{legend}{Show colors legend (optional)}
+\item{legend}{(logical). If TRUE, show colours legend. Default: FALSE.}
 
-\item{inputs}{Show non-node inputs: data-sets, data-frames and columns (optional)}
+\item{inputs}{(logical). If TRUE, show non-node inputs. Default: FALSE.}
 }
 \value{
-An interactive visNetwork object with features:
-\itemize{
-\item Highlighting of connected nodes
-\item Node selection and filtering by module
-\item Directional arrows showing relationships
-\item Hierarchical layout
-\item Draggable nodes
-}
+An interactive visNetwork object with highlighting of connected nodes,
+node selection and filtering by module, directional arrows, hierarchical
+layout, and draggable nodes.
 }
 \description{
-Generates an interactive network visualization using visNetwork library. The visualization
-includes interactive features for exploring model structure and relationships.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Generates an interactive network visualisation using visNetwork library.
+The visualisation includes interactive features for exploring model structure
+and relationships.
 }
 \examples{
 \donttest{

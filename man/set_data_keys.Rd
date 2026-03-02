@@ -7,24 +7,22 @@
 set_data_keys(data_keys = NULL)
 }
 \arguments{
-\item{data_keys}{Optional list of lists. Each inner list must contain:
+\item{data_keys}{(list, optional). List of data specifications. Each element is a named list with:
 \itemize{
-\item cols: A vector containing the column names for the data
-\item keys: A vector specifying the key columns
+\item cols: Character vector of column names.
+\item keys: Character vector of key columns (subset of cols).
 }
-If NULL, returns the current data model.}
+If NULL, returns the current global data model. Default: NULL.}
 }
 \value{
-\itemize{
-\item If data_keys = NULL: Returns the current global data model
-\item If data_keys provided: Sets the new data model and returns invisibly
-}
+Current or newly set global data model (invisibly).
 }
 \description{
-Manages a global data model by either setting new data keys or retrieving the current ones.
-The data model consists of named lists containing column names and their associated key columns.
+Manages a global data model by setting or retrieving data keys.
+The data model defines column names and their associated grouping keys for each data frame.
 }
 \examples{
 print(imports_data_keys)
 set_data_keys(imports_data_keys)
+
 }

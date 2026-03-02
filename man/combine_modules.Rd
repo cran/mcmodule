@@ -2,20 +2,21 @@
 % Please edit documentation in R/combine_modules.R
 \name{combine_modules}
 \alias{combine_modules}
-\title{Combine Two Modules}
+\title{Combine Two mcmodule Objects}
 \usage{
 combine_modules(mcmodule_x, mcmodule_y)
 }
 \arguments{
-\item{mcmodule_x}{First module to combine}
+\item{mcmodule_x}{(mcmodule object). First module.}
 
-\item{mcmodule_y}{Second module to combine}
+\item{mcmodule_y}{(mcmodule object). Second module.}
 }
 \value{
-A combined mcmodule object
+An mcmodule object with combined data and node lists.
 }
 \description{
-Combines two mcmodules into a single mcmodule by merging their data and components.
+Combines two mcmodule objects into a single mcmodule by merging their
+data and node lists.
 }
 \examples{
 module_x <- list(

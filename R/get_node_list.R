@@ -17,7 +17,12 @@ get_node_list <- function(
   data_keys = set_data_keys(),
   keys = NULL
 ) {
-  module <- gsub("_exp", "", deparse(substitute(exp)))
+  # Validate that exp is a quoted expression (use quote({ ... }))
+  if (!(is.call(exp) || is.expression(exp) || is.language(exp))) {
+    stop("exp must be a quoted expression, use quote({ ... })")
+  }
+
+  exp_name <- gsub("_exp", "", deparse(substitute(exp)))
 
   # Initialize lists and vectors
   out_node_list <- list()
@@ -27,57 +32,57 @@ get_node_list <- function(
   for (i in 2:length(exp)) {
     node_name <- deparse(exp[[i]][[2]])
     node_exp <- paste0(deparse(exp[[i]][[3]]), collapse = "")
-    out_node_list[[node_name]][["node_exp"]] <- node_exp
 
-    # Extract input node names
-    exp1 <- gsub("_", "975UNDERSCORE2023", node_exp)
-    exp1 <- gsub("::", "975DOUBLEDOT2025", exp1)
+    # Use AST parser
+    parse_res <- ast_traverse(node_exp)
+    inputs <- parse_res$inputs
 
-    exp2 <- gsub("[^[:alnum:]]", ",", exp1)
-
-    exp3 <- gsub("975UNDERSCORE2023", "_", exp2)
-    exp3 <- gsub("975DOUBLEDOT2025", "::", exp3)
-
-    exp4 <- c(strsplit(exp3, split = ",")[[1]])
-    exp4 <- exp4[!exp4 %in% ""]
-
-    if (any(suppressWarnings(as.numeric(exp4)) %in% c(Inf, -Inf))) {
+    if (length(parse_res$unsupported_types) > 0) {
       warning(
-        "Inputs called 'inf' or '-inf' are assumed to be infinite (numeric) and are not parsed as mcnodes"
+        sprintf(
+          "mcdata/mcstoc calls with type(s) %s are not fully supported by this mcmodule version, downstream compatibility is not guaranteed",
+          paste(unique(parse_res$unsupported_types), collapse = ", ")
+        )
       )
     }
-    exp5 <- suppressWarnings(exp4[is.na(as.numeric(exp4))])
-    inputs <- unique(exp5)
 
-    # Check NA removal
-    na_rm <- any(inputs %in% "mcnode_na_rm")
-    if (na_rm) {
-      out_node_list[[node_name]][["na_rm"]] <- na_rm
+    if (parse_res$created_in_exp) {
+      out_node_list[[node_name]][["created_in_exp"]] <- TRUE
+
+      if (parse_res$nvariates) {
+        stop(
+          "Remove 'nvariates' argument from:\n   ",
+          node_exp,
+          "\nNumber of variates is determined automatically based on input data rows"
+        )
+      }
+
+      if (!is.null(parse_res$mc_func)) {
+        out_node_list[[node_name]][["mc_func"]] <- parse_res$mc_func
+      }
     }
 
-    # Filter function inputs
-    capture_fun <- gregexpr(
-      '(([A-Za-z.][A-Za-z0-9._]*::)?[A-Za-z.][A-Za-z0-9._]*)\\(',
-      node_exp,
-      perl = TRUE
-    )
-    starts <- attr(capture_fun[[1]], "capture.start")[, 1]
-    lens <- attr(capture_fun[[1]], "capture.length")[, 1]
-    fun_input <- if (length(starts)) {
-      substring(node_exp, starts, starts + lens - 1)
-    } else {
-      character(0)
+    if (parse_res$na_rm) {
+      out_node_list[[node_name]][["na_rm"]] <- TRUE
+    }
+    if (parse_res$function_call) {
+      out_node_list[[node_name]][["function_call"]] <- TRUE
     }
 
-    inputs <- inputs[!inputs %in% fun_input]
-    all_nodes <- unique(c(all_nodes, node_name, inputs))
+    # Collect node names and inputs
+    all_nodes <- unique(c(all_nodes, inputs, node_name))
 
-    # Set node type
+    # Set node type: numeric literal -> scalar; otherwise an output node that may depend on inputs
     out_node_list[[node_name]][["type"]] <-
-      if (!grepl("[[:alpha:]]", node_exp)) "scalar" else "out_node"
+      if (!grepl("[[:alpha:]]", node_exp) && !is.na(as.numeric(node_exp))) {
+        "scalar"
+      } else {
+        "out_node"
+      }
 
+    out_node_list[[node_name]][["node_exp"]] <- node_exp
     out_node_list[[node_name]][["inputs"]] <- inputs
-    out_node_list[[node_name]][["module"]] <- module
+    out_node_list[[node_name]][["exp_name"]] <- exp_name
     out_node_list[[node_name]][["mc_name"]] <- node_name
   }
 
@@ -181,7 +186,7 @@ get_node_list <- function(
         }
       }
 
-      in_node_list[[node_name]][["module"]] <- module
+      in_node_list[[node_name]][["exp_name"]] <- exp_name
       in_node_list[[node_name]][["mc_name"]] <- node_name
 
       # If no inputs_col matched (no dataset matched) but explicit keys were provided, assign them
@@ -222,6 +227,9 @@ get_node_list <- function(
   # Combine all node lists (provisional list for key matching)
   node_list <- c(in_node_list, prev_node_list, out_node_list)
 
+  # Order list in node appearance order in expression
+  node_list <- node_list[all_nodes]
+
   # Process output node keys
   for (i in names(out_node_list)) {
     inputs <- node_list[[i]][["inputs"]]
@@ -238,4 +246,129 @@ get_node_list <- function(
   class(node_list) <- "mcnode_list"
 
   return(node_list)
+}
+
+#' AST parser for node expressions
+#'
+#' Traverse a parsed R expression (AST) and extract symbol names and flags
+#' used by get_node_list.
+#'
+#' @param expr_text Character scalar with the expression to parse (R code as text).
+#' @return A list with elements:
+#'   - inputs: character vector of symbol names considered inputs
+#'   - created_in_exp: logical; TRUE if mcstoc or mcdata was used in the expression
+#'   - mc_func: character or NULL; sampling function name detected for mcstoc/mcdata
+#'   - nvariates: logical; TRUE if a `nvariates` argument was present
+#'   - na_rm: logical; TRUE if `mcnode_na_rm` was used
+#'   - function_call: logical; TRUE if any function calls were present
+#' @keywords internal
+#' @noRd
+ast_traverse <- function(expr_text) {
+  parsed <- tryCatch(parse(text = expr_text), error = function(e) NULL)
+  if (is.null(parsed)) {
+    return(list(
+      inputs = character(),
+      created_in_exp = FALSE,
+      mc_func = NULL,
+      nvariates = FALSE,
+      na_rm = FALSE,
+      function_call = FALSE,
+      unsupported_types = character()
+    ))
+  }
+  node <- parsed[[1]]
+
+  symbols <- character()
+  function_names <- character()
+  mc_func <- NULL
+  created_in_exp <- FALSE
+  na_rm_flag <- FALSE
+  nvariates_flag <- FALSE
+  function_call_flag <- FALSE
+  unsupported_types <- character()
+
+  traverse <- function(e) {
+    if (is.symbol(e)) {
+      symbols <<- c(symbols, as.character(e))
+      return()
+    }
+    if (is.atomic(e)) {
+      return()
+    }
+    if (is.call(e)) {
+      function_call_flag <<- TRUE
+      fname <- if (is.symbol(e[[1]])) {
+        as.character(e[[1]])
+      } else {
+        paste0(deparse(e[[1]]), collapse = "")
+      }
+
+      function_names <<- c(function_names, fname)
+
+      if (fname %in% c("mcstoc", "mcdata")) {
+        created_in_exp <<- TRUE
+        nm <- names(e)
+        if (!is.null(nm) && "nvariates" %in% nm) {
+          nvariates_flag <<- TRUE
+        }
+
+        # detect mc sampling function name
+        if (!is.null(nm) && "func" %in% nm) {
+          argval <- e[["func"]]
+          mc_func <<- if (is.symbol(argval)) {
+            as.character(argval)
+          } else {
+            paste0(deparse(argval), collapse = "")
+          }
+        } else if (length(e) >= 2) {
+          second <- e[[2]]
+          mc_func <<- if (is.symbol(second)) {
+            as.character(second)
+          } else {
+            paste0(deparse(second), collapse = "")
+          }
+        }
+
+        # detect unsupported type argument values ("U", "VU")
+        if (!is.null(nm) && "type" %in% nm) {
+          type_val <- e[["type"]]
+          type_char <- if (is.character(type_val)) {
+            type_val
+          } else if (is.symbol(type_val)) {
+            as.character(type_val)
+          } else {
+            paste0(deparse(type_val), collapse = "")
+          }
+          if (type_char %in% c("U", "VU")) {
+            unsupported_types <<- unique(c(unsupported_types, type_char))
+          }
+        }
+      }
+
+      if (fname == "mcnode_na_rm") {
+        na_rm_flag <<- TRUE
+      }
+
+      for (i in seq_along(e)[-1]) {
+        traverse(e[[i]])
+      }
+    }
+  }
+
+  traverse(node)
+
+  inputs <- setdiff(unique(symbols), unique(function_names))
+  if (!is.null(mc_func)) {
+    inputs <- setdiff(inputs, mc_func)
+  }
+
+  list(
+    inputs = inputs,
+    created_in_exp = created_in_exp,
+    mc_func = mc_func,
+    nvariates = nvariates_flag,
+    na_rm = na_rm_flag,
+    function_call = function_call_flag,
+    unsupported_types = unsupported_types
+  )
 }

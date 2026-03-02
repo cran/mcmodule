@@ -27,6 +27,3 @@ sample_mcnode <- mcstoc(runif,
 clean_mcnode <- mcnode_na_rm(sample_mcnode)
 
 }
-\seealso{
-\code{\link[mc2d]{is.na.mcnode}}
-}

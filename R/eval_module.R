@@ -1,27 +1,85 @@
-#' Evaluate a Monte Carlo Model Expression and create an mcmodule
+#' Evaluate Monte Carlo Model Expressions
 #'
-#' Takes a set of Monte Carlo model expressions and evaluates them and creates an mcmodule
-#' containing results and metadata.
+#' Evaluates a model expression or list of expressions to produce an mcmodule
+#' object containing simulation results and metadata. Expression may use
+#' `mcstoc()` and `mcdata()` to create nodes inline; nvariates is automatically
+#' inferred from the data.
 #'
-#' @param exp Model expression or list of expressions to evaluate
-#' @param data Input data frame containing model parameters
-#' @param param_names Named vector for parameter renaming (optional)
-#' @param prev_mcmodule Previous module(s) for dependent calculations
-#' @param summary Logical; whether to calculate summary statistics
-#' @param mctable Reference table for mcnodes, defaults to set_mctable()
-#' @param data_keys Data structure and keys, defaults to set_data_keys()
-#' @param match_keys Keys to match prev_mcmodule mcnodes and data by
-#' @param keys Optional explicit keys for the input data (character vector)
-#' @param overwrite_keys Logical or NULL. If NULL (default) it becomes TRUE when
-#'   data_keys is NULL or an empty list; otherwise FALSE.
+#' @details
+#' - mcstoc() and mcdata() may be used directly inside model expressions.
+#'   When these are used you should NOT explicitly supply nvariates, nvariates
+#'   will be inferred automatically as the number of rows in the input `data`.
+#'   Other arguments are preserved, for example specify `type = "0"` when
+#'   providing data without variability/uncertainty (see ?mcdata and ?mcstoc).
+#' - By design, mcmodule supports type = "V" (the default, with variability) and
+#'   type = "0" (no variability) nodes. Expressions that specify other node
+#'   types ("U" or "VU") are not fully supported and downstream compatibility is not
+#'   guaranteed.
+#' - An explicit `mctable` is optional but highly recommended. If no mctable is
+#'   provided, any model nodes that match column names in `data` will be built
+#'   from the data. If a `mctable` is provided and a node is not found there but
+#'   exists as a data column, a warning will be issued and the node will be created
+#'   from the data column.
+#' - Within expressions reference input mcnodes by their bare names (e.g.
+#'   column1). Do not use `data$column1` or `data["column1"]`.
 #'
-#' @return An mcmodule object containing data, expressions, and nodes
+#' @param exp (language or list). Model expression or list of expressions to evaluate.
+#' @param data (data frame). Input data; number of rows determines nvariates for
+#'   `mcstoc()`/`mcdata()` in expressions. Default: required.
+#' @param param_names (named character vector, optional). Names to rename parameters.
+#'   Default: NULL.
+#' @param prev_mcmodule (mcmodule or list, optional). Previous module(s) for
+#'   dependent calculations. Default: NULL.
+#' @param summary (logical). If TRUE, calculate summary statistics for output nodes.
+#'   Default: FALSE.
+#' @param mctable (data frame). Reference table for mcnodes with `mcnode` and
+#'   `mc_func` columns. If NULL or not provided, nodes matching `data` column names
+#'   are automatically created. Default: empty mctable().
+#' @param data_keys (list). Data structure and keys for input data. Default:
+#'   `set_data_keys()`.
+#' @param match_keys (character vector, optional). Keys to match `prev_mcmodule`
+#'   mcnodes with current data. Default: NULL.
+#' @param keys (character vector, optional). Explicit keys for input data. Default: NULL.
+#' @param overwrite_keys (logical or NULL). If NULL (default), becomes TRUE when
+#'   `data_keys` is NULL or empty; otherwise FALSE.
+#' @param use_baseline (character vector, optional). mcnode names to override with
+#'   `sensi_baseline` values from `mctable`. Default: NULL.
+#' @param use_variation (character vector, optional). mcnode names to apply
+#'   `sensi_variation` expression from `mctable` before node creation. Default: NULL.
+#'
+#' @return An mcmodule object (list) with elements:
+#'   \itemize{
+#'     \item data: List containing input data frames.
+#'     \item exp: List of evaluated expressions.
+#'     \item node_list: Named list of mcnode objects with metadata.
+#'   }
 #' @export
 #'
 #' @examples
 #' # Basic usage with single expression
+#' # Build a quoted expression using mcnodes defined in mctable or built with
+#' # mcstoc()/mcdata within the expression (do NOT set nvariates, it is
+#' # inferred from nrow(data) when evaluated by eval_module()).
+#' expr_example <- quote({
+#'   # Within-herd prevalence (assigned from a pre-built mcnode w_prev)
+#'   inf_a <- w_prev
+#'
+#'   # Estimate of clinic sensitivity
+#'   clinic_sensi <- mcstoc(runif, min = 0.6, max = 0.8)
+#'
+#'   # Probability an infected animal is tested in origin and not detected
+#'   false_neg_a <- inf_a * test_origin * (1 - test_sensi) * (1 - clinic_sensi)
+#'
+#'   # Probability an infected animal is not tested and not detected
+#'   no_test_a <- inf_a * (1 - test_origin) * (1 - clinic_sensi)
+#'
+#'   # no_detect_a: total probability an infected animal is not detected
+#'   no_detect_a <- false_neg_a + no_test_a
+#' })
+#'
+#' # Evaluate
 #' eval_module(
-#'   exp = imports_exp,
+#'   exp = expr_example,
 #'   data = imports_data,
 #'   mctable = imports_mctable,
 #'   data_keys = imports_data_keys
@@ -36,7 +94,9 @@ eval_module <- function(
   data_keys = set_data_keys(),
   match_keys = NULL,
   keys = NULL,
-  overwrite_keys = NULL
+  overwrite_keys = NULL,
+  use_baseline = NULL,
+  use_variation = NULL
 ) {
   data_name <- deparse(substitute(data))
 
@@ -46,6 +106,120 @@ eval_module <- function(
   if (nrow(data) < 1) {
     stop(sprintf("data '%s' has 0 rows", data_name))
   }
+
+  # Normalize optional OAT arguments
+  use_baseline <- if (is.null(use_baseline)) {
+    character()
+  } else {
+    unique(use_baseline[!is.na(use_baseline) & use_baseline != ""])
+  }
+  use_variation <- if (is.null(use_variation)) {
+    character()
+  } else {
+    unique(use_variation[!is.na(use_variation) & use_variation != ""])
+  }
+
+  data_eval <- data
+  mctable_eval <- mctable
+
+  if (length(c(use_baseline, use_variation)) > 0) {
+    target_nodes <- unique(c(use_baseline, use_variation))
+
+    parse_param_list <- function(text_value) {
+      if (is.na(text_value) || text_value == "") {
+        return(NULL)
+      }
+      eval(parse(text = paste0("list(", text_value, ")")), envir = baseenv())
+    }
+
+    for (mc_name in target_nodes) {
+      row_idx <- which(mctable_eval$mcnode == mc_name)
+      if (length(row_idx) == 0) {
+        warning(sprintf("%s not found in mctable", mc_name))
+        next
+      }
+      row_idx <- row_idx[[1]]
+      mc_row <- mctable_eval[row_idx, ]
+
+      if (mc_name %in% use_baseline) {
+        baseline_list <- parse_param_list(as.character(mc_row$sensi_baseline))
+        if (is.null(baseline_list)) {
+          warning(sprintf("sensi_baseline not specified for %s", mc_name))
+        } else if ("value" %in% names(baseline_list)) {
+          value_name <- ifelse(
+            is.na(mc_row$from_variable),
+            mc_name,
+            as.character(mc_row$from_variable)
+          )
+          data_eval[[value_name]] <- rep(baseline_list$value, nrow(data_eval))
+        } else {
+          for (param in names(baseline_list)) {
+            param_col <- paste(mc_name, param, sep = "_")
+            data_eval[[param_col]] <- rep(
+              baseline_list[[param]],
+              nrow(data_eval)
+            )
+          }
+        }
+      }
+
+      if (mc_name %in% use_variation) {
+        transformation <- as.character(mc_row$transformation)
+        if (!is.na(transformation)) {
+          value_name <- ifelse(
+            is.na(mc_row$from_variable),
+            mc_name,
+            as.character(mc_row$from_variable)
+          )
+          if (value_name %in% names(data_eval)) {
+            assign("value", data_eval[[value_name]], envir = environment())
+            data_eval[[mc_name]] <- eval(
+              parse(text = transformation),
+              envir = environment()
+            )
+            rm("value", envir = environment())
+            mctable_eval[row_idx, "transformation"] <- NA
+          }
+        }
+
+        variation_text <- as.character(mc_row$sensi_variation)
+        if (is.na(variation_text) || variation_text == "") {
+          warning(sprintf("sensi_variation not specified for %s", mc_name))
+          next
+        }
+
+        if (!is.na(mc_row$mc_func)) {
+          param_cols <- names(data_eval)[
+            grepl(paste0("^", mc_name, "_"), names(data_eval))
+          ]
+          if (length(param_cols) == 0) {
+            warning(sprintf("No input columns found for %s", mc_name))
+            next
+          }
+          for (param_col in param_cols) {
+            assign("value", data_eval[[param_col]], envir = environment())
+            data_eval[[param_col]] <- eval(
+              parse(text = variation_text),
+              envir = environment()
+            )
+          }
+          rm("value", envir = environment())
+        } else if (mc_name %in% names(data_eval)) {
+          assign("value", data_eval[[mc_name]], envir = environment())
+          data_eval[[mc_name]] <- eval(
+            parse(text = variation_text),
+            envir = environment()
+          )
+          rm("value", envir = environment())
+        } else {
+          warning(sprintf("No input column found for %s", mc_name))
+        }
+      }
+    }
+  }
+
+  data <- data_eval
+  mctable <- mctable_eval
 
   # Determine default for overwrite_keys when not explicitly provided:
   # - If overwrite_keys is NULL and data_keys is NULL or an empty list -> default TRUE
@@ -63,6 +237,7 @@ eval_module <- function(
   # If overwrite_keys is TRUE create a local data_keys entry for this data
   # (do not modify global data_keys)
   if (isTRUE(overwrite_keys)) {
+    data_keys_original <- data_keys
     data_keys_local <- list(cols = names(data), keys = keys)
     data_keys <- list()
     data_keys[[data_name]] <- data_keys_local
@@ -72,7 +247,8 @@ eval_module <- function(
         data_name,
         paste(keys, collapse = ", ")
       ))
-    } else {
+    } else if (length(data_keys_original) > 0) {
+      # Only message if data_keys were not NULL (to avoid message when both are NULL)
       message(sprintf("data_keys overwritten for %s", data_name))
     }
     # When overwritten, we do not need to forward keys separately
@@ -92,12 +268,11 @@ eval_module <- function(
   }
 
   node_list <- list()
-  modules <- c()
 
   # Process each expression in the list
   for (i in 1:length(exp_list)) {
     exp_i <- exp_list[[i]]
-    module <- names(exp_list)[[i]]
+    exp_name_i <- names(exp_list)[[i]]
 
     # Get initial node list (forward keys_arg as character vector or NULL)
     node_list_i <- get_node_list(
@@ -111,15 +286,11 @@ eval_module <- function(
     # Identify nodes requiring previous module inputs
     prev_nodes <- names(node_list_i)[grepl("prev_node", node_list_i)]
     prev_nodes <- prev_nodes[!prev_nodes %in% names(node_list)]
+    data_nodes <- prev_nodes[prev_nodes %in% names(data)]
 
     # Process nodes requiring previous module inputs
     if (length(prev_nodes) > 0) {
-      if (is.null(prev_mcmodule)) {
-        stop(sprintf(
-          "prev_mcmodule for %s needed but not provided",
-          paste(prev_nodes, collapse = ", ")
-        ))
-      } else {
+      if (!is.null(prev_mcmodule)) {
         prev_mcmodule_list <- if (inherits(prev_mcmodule, "mcmodule")) {
           list(prev_mcmodule)
         } else {
@@ -256,6 +427,42 @@ eval_module <- function(
             }
           }
         }
+      } else if (length(data_nodes) > 0) {
+        # Update prev_nodes to only those not in data
+        prev_nodes <- prev_nodes[!prev_nodes %in% names(data)]
+        # If prev_nodes are in data, create mcnodes directly from data
+        data_mctable <- data.frame(
+          mcnode = data_nodes,
+          mc_func = NA
+        )
+
+        create_mcnodes(data = data, mctable = data_mctable)
+
+        # Update node list
+        node_list_i_data <- get_node_list(
+          exp = exp_i,
+          param_names = param_names,
+          mctable = data_mctable,
+          data_keys = data_keys,
+          keys = keys_arg
+        )
+
+        node_list_i[data_nodes] <- node_list_i_data[data_nodes]
+
+        if (nrow(mctable) == 0) {
+          message("Creating mcnodes from data (mctable not provided)")
+        } else {
+          message(sprintf(
+            "The following nodes are present in data but not in the mctable: %s.",
+            paste(data_nodes, collapse = ", ")
+          ))
+        }
+      } else {
+        # Error if prev_nodes are neither in prev_mcmodule nor in data
+        stop(sprintf(
+          "The following nodes are not present in data or in prev_mcmodule: %s.",
+          paste(prev_nodes, collapse = ", ")
+        ))
       }
     }
 
@@ -294,9 +501,58 @@ eval_module <- function(
       create_mcnodes(data = data, mctable = mctable_i)
     }
 
+    # Add nvariates to mcstoc and mcdata in current expression (handle multi-line & nested calls)
+    # Only run if at least one node was created inside the expression
+    if (any(sapply(node_list_i, function(x) isTRUE(x$created_in_exp)))) {
+      add_nvariates_ast <- function(expr, data_name = "data") {
+        # Recursively walk and modify calls
+        if (is.call(expr)) {
+          # Recurse into function name if it's a call (e.g. pkg::fn)
+          # then recurse into arguments
+          for (i in seq_along(expr)) {
+            if (i == 1) {
+              next
+            }
+            expr[[i]] <- add_nvariates_ast(expr[[i]], data_name)
+          }
+
+          fn_deparsed <- paste(deparse(expr[[1]]), collapse = "")
+          is_target <- grepl("(^|::)mcdata$|(^|::)mcstoc$", fn_deparsed)
+
+          if (is_target) {
+            nm <- names(expr)
+            if (!is.null(nm) && "nvariates" %in% nm) {
+              stop("Remove 'nvariates' argument")
+            }
+            # append nvariates = nrow(data)
+            idx <- length(expr) + 1
+            expr[[idx]] <- call("nrow", as.name(data_name))
+            nms <- names(expr)
+            if (is.null(nms)) {
+              nms <- rep("", length(expr))
+            }
+            nms[idx] <- "nvariates"
+            names(expr) <- nms
+          }
+          return(expr)
+        } else if (is.expression(expr)) {
+          # expression vector: apply to each element
+          for (i in seq_along(expr)) {
+            expr[[i]] <- add_nvariates_ast(expr[[i]], data_name)
+          }
+          return(expr)
+        } else {
+          return(expr)
+        }
+      }
+
+      # modify the quoted expression in place
+      exp_i <- add_nvariates_ast(exp_i, data_name = "data")
+    }
+
     # Evaluate current expression
     eval(exp_i)
-    message(sprintf("%s evaluated", module))
+    message(sprintf("%s evaluated", exp_name_i))
 
     # Update node metadata
     for (j in 1:length(node_list)) {
@@ -308,13 +564,13 @@ eval_module <- function(
 
       # Update input references
       inputs <- node_list[[mc_name]][["inputs"]]
-      node_list[[mc_name]][["param"]] <- inputs
+      node_list[[mc_name]][["exp_param"]] <- inputs
 
       inputs[inputs %in% names(new_param_names)] <-
         new_param_names[inputs[inputs %in% names(new_param_names)]]
       node_list[[mc_name]][["inputs"]] <- inputs
 
-      # Update keys for output nodes
+      # Update keys and add exp name for output nodes
       if (
         ((!is.null(prev_mcmodule)) | (length(exp) > 1)) &
           node_list[[mc_name]][["type"]] == "out_node"
@@ -342,13 +598,11 @@ eval_module <- function(
 
       # Set module name
       if (
-        length(node_list[[mc_name]][["module"]]) == 0 ||
-          node_list[[mc_name]][["module"]] %in% "exp_i"
+        length(node_list[[mc_name]][["exp_name"]]) == 0 ||
+          node_list[[mc_name]][["exp_name"]] %in% "exp_i"
       ) {
-        node_list[[mc_name]][["module"]] <- module
+        node_list[[mc_name]][["exp_name"]] <- exp_name_i
       }
-
-      modules <- unique(c(modules, node_list[[mc_name]][["module"]]))
 
       # Calculate summary statistics if requested
       if (summary & is.mcnode(mcnode)) {
@@ -387,8 +641,7 @@ eval_module <- function(
   mcmodule <- list(
     data = list(data),
     exp = exp,
-    node_list = node_list,
-    modules = modules
+    node_list = node_list
   )
 
   names(mcmodule$data) <- data_name

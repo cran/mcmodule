@@ -1,17 +1,19 @@
-#' Combined Probability of Events (At least one)
+#' Combine Probabilities Assuming Independence
 #'
-#' Combines probabilities of multiple events assuming independence,
-#' using the formula P(A or B) = 1 - (1-P(A))*(1-P(B)).
-#' It matches dimensions automatically.
+#' Combines probabilities of multiple independent events using the formula:
+#' P(at least one) = 1 - (1-P(A)) * (1-P(B)) * ... Automatically matches
+#' dimensions and keys.
 #'
-#' @param mcmodule Module containing node list and input data frames
-#' @param mc_names Vector of node names to combine
-#' @param name Optional custom name for combined node (default: NULL)
-#' @param all_suffix Suffix for combined node name (default: "all")
-#' @param prefix Optional prefix for output node name (default: NULL)
-#' @param summary Whether to calculate summary statistics (default: TRUE)
+#' @param mcmodule (mcmodule object). Module containing node list and data frames.
+#' @param mc_names (character vector). Node names to combine.
+#' @param name (character, optional). Custom name for combined node.
+#'   If NULL, auto-generated. Default: NULL.
+#' @param all_suffix (character). Suffix for auto-generated node name.
+#'   Default: "all".
+#' @param prefix (character, optional). Prefix for output node name. Default: NULL.
+#' @param summary (logical). If TRUE, calculate summary statistics. Default: TRUE.
 #'
-#' @return Updated mcmodule with new combined probability node
+#' @return Updated mcmodule with new combined probability node.
 #'
 #' @examples
 #' module <- list(
@@ -169,6 +171,10 @@ at_least_one <- function(
     prefix <- sub("_$", "", prefix)
   }
 
+  if (!is.null(prefix) && prefix == "") {
+    prefix <- NULL
+  }
+
   # Add new node to module
   mcmodule$node_list[[p_all_mc_name]] <- list(
     mcnode = p_all,
@@ -265,24 +271,25 @@ generate_all_name <- function(mc_names, all_suffix = NULL) {
   paste0(c(common_parts, all_suffix), collapse = "_")
 }
 
-#' Aggregate Across Groups
+#' Aggregate mcnode Values Across Groups
 #'
-#' Combines node values across specified grouping variables using different aggregation methods.
-#' The aggregation method can be specified via agg_func parameter:
-#' - "prob": Combined probability assuming independence
-#' - "sum": Sum of values
-#' - "avg": Average of values
-#' - NULL: defaults to "sum" if mc_name ends in "_n", else defaults to "prob"
-#' @param mcmodule mcmodule object containing nodes and data
-#' @param mc_name name of node to aggregate
-#' @param agg_keys grouping variables for aggregation
-#' @param agg_suffix Suffix for aggregated node name (default: "agg")
-#' @param prefix Optional prefix for output node name - includes metadata as add_prefix() (default: NULL)
-#' @param name Custom name for output node (optional)
-#' @param summary whether to include summary statistics (default: TRUE)
-#' @param keep_variates whether to preserve individual values (default: FALSE)
-#' @param agg_func aggregation method ("prob", "sum", "avg", or NULL)
+#' Aggregates node values across grouping variables using various methods
+#' (combined probability, sum, mean, or automatic selection). Returns an
+#' updated mcmodule with new aggregated node.
 #'
+#' @param mcmodule (mcmodule object). Module containing node list and data.
+#' @param mc_name (character). Name of node to aggregate.
+#' @param agg_keys (character vector, optional). Column names for grouping.
+#'   If NULL, defaults to "scenario_id". Default: NULL.
+#' @param agg_suffix (character, optional). Suffix for aggregated node name.
+#'   Default: "agg".
+#' @param prefix (character, optional). Prefix for output node name. Default: NULL.
+#' @param name (character, optional). Custom name for output node. Default: NULL.
+#' @param summary (logical). If TRUE, include summary statistics. Default: TRUE.
+#' @param keep_variates (logical). If TRUE, preserve individual variate values.
+#'   Default: FALSE.
+#' @param agg_func (character, optional). Aggregation method: "prob" (combined
+#'   probability), "sum", "avg", or NULL (automatic). Default: NULL.
 #'
 #' @return mcmodule with new aggregated node added
 #'
@@ -350,6 +357,10 @@ agg_totals <- function(
       sub(paste0("^", prefix), "", agg_mc_name)
     )
     prefix <- sub("_$", "", prefix)
+  }
+
+  if (!is.null(prefix) && prefix == "") {
+    prefix <- NULL
   }
 
   # Extract variates
@@ -492,29 +503,31 @@ agg_totals <- function(
 #' (trial, subset, set) in a structured population. Uses trial probabilities and
 #' handles nested sampling with conditional probabilities.
 #'
-#' @param mcmodule mcmodule object containing input data and node structure
-#' @param mc_names Vector of node names to process
-#' @param trials_n Trial count column name
-#' @param subsets_n Subset count column name (optional)
-#' @param subsets_p Subset prevalence column name (optional)
-#' @param name Custom name for output nodes (optional)
-#' @param prefix Prefix for output node names (optional)
-#' @param combine_prob Combine probability of all nodes assuming independence (default: TRUE)
-#' @param all_suffix Suffix for combined node name (default: "all")
-#' @param level_suffix A list of suffixes for each hierarchical level (default: c(trial="trial",subset="subset",set="set"))
-#' @param mctable Data frame containing Monte Carlo nodes definitions (default: set_mctable())
-#' @param agg_keys Column names for aggregation (optional)
-#' @param agg_suffix Suffix for aggregated node names (default: "hag")
-#' @param keep_variates whether to preserve individual values (default: FALSE)
-#' @param summary Include summary statistics if TRUE (default: TRUE)
-#' @param data_name Data name used to create trials_n, subsets_n and subsets_p nodes if they don't exist in mcmodule (optional)
+#' @param mcmodule (mcmodule object). Module containing input data and node structure.
+#' @param mc_names (character vector). Node names to process.
+#' @param trials_n (character). Trial count column name.
+#' @param subsets_n (character, optional). Subset count column name. Default: NULL.
+#' @param subsets_p (character, optional). Subset prevalence column name. Default: NULL.
+#' @param name (character, optional). Custom name for output nodes. Default: NULL.
+#' @param prefix (character, optional). Prefix for output node names. Default: NULL.
+#' @param combine_prob (logical). If TRUE, combine probability of all nodes assuming
+#'   independence. Default: TRUE.
+#' @param all_suffix (character). Suffix for combined node name. Default: "all".
+#' @param level_suffix (list, optional). Suffixes for each hierarchical level.
+#'   Default: c(trial="trial", subset="subset", set="set").
+#' @param mctable (data frame, optional). Monte Carlo nodes definitions.
+#'   Default: set_mctable().
+#' @param agg_keys (character vector, optional). Column names for aggregation.
+#'   Default: NULL.
+#' @param agg_suffix (character). Suffix for aggregated node names. Default: "hag".
+#' @param keep_variates (logical). If TRUE, preserve individual variate values.
+#'   Default: FALSE.
+#' @param summary (logical). If TRUE, include summary statistics. Default: TRUE.
+#' @param data_name (character, optional). Data name used to create trials_n,
+#'   subsets_n and subsets_p nodes if they don't exist in mcmodule. Default: NULL.
 #'
-#' @return
-#' Updated mcmodule object containing:
-#' - Combined node probabilities
-#' - Probabilities and counts at trial level
-#' - Probabilities and counts at subset level
-#' - Probabilities and counts at set level
+#' @return Updated mcmodule object containing combined node probabilities and
+#'   probabilities/counts at trial, subset, and set levels.
 #'
 #' @examples
 #' imports_mcmodule <- trial_totals(
@@ -782,6 +795,10 @@ trial_totals <- function(
     ))
   }
 
+  if (!is.null(prefix) && prefix == "") {
+    prefix <- NULL
+  }
+
   # Fix missing level suffixes
   missing_suffixes <- setdiff(c("trial", "subset", "set"), names(level_suffix))
   for (suffix in missing_suffixes) {
@@ -883,6 +900,8 @@ trial_totals <- function(
 
     return(mcmodule)
   }
+  # Iniciate keys_names vector to keep track of all keys used in nodes
+  keys_names <- c()
 
   # Process all nodes
   mcmodule <- process_trial_mcnode(
@@ -904,6 +923,11 @@ trial_totals <- function(
   } else {
     mcmodule$node_list[[trials_n]][["mcnode"]]
   }
+
+  keys_names <- unique(c(
+    keys_names,
+    mcmodule$node_list[[trials_n]][["keys"]]
+  ))
 
   # If subsets_n is NULL, defaults to 1
   if (is.null(subsets_n)) {
@@ -931,6 +955,11 @@ trial_totals <- function(
     } else {
       mcmodule$node_list[[subsets_n]][["mcnode"]]
     }
+
+    keys_names <- unique(c(
+      keys_names,
+      mcmodule$node_list[[subsets_n]][["keys"]]
+    ))
 
     hierarchical_n <- TRUE
   }
@@ -964,6 +993,11 @@ trial_totals <- function(
       mcmodule$node_list[[subsets_p]][["mcnode"]]
     }
 
+    keys_names <- unique(c(
+      keys_names,
+      mcmodule$node_list[[subsets_p]][["keys"]]
+    ))
+
     hierarchical_p <- TRUE
   }
 
@@ -979,7 +1013,8 @@ trial_totals <- function(
     keys_names,
     agg_keys,
     total_type,
-    keep_variates
+    keep_variates,
+    prefix
   ) {
     node_list[[name]] <- list(
       mcnode = value,
@@ -1103,10 +1138,10 @@ trial_totals <- function(
     )
   )
 
-  # Process each node
   for (mc_name in mc_names) {
     if (!is.null(agg_keys)) {
-      keys_names <- mcmodule$node_list[[mc_name]][["keys"]]
+      # Original node keys before aggregation
+      original_keys <- mcmodule$node_list[[mc_name]][["keys"]]
       # Aggregate node if agg_keys provided
       messages <- character(0)
       withCallingHandlers(
@@ -1145,15 +1180,23 @@ trial_totals <- function(
       # Add metadata
       mcmodule$node_list[[mc_name]][["module"]] <- module_name
       mcmodule$node_list[[mc_name]][["agg_keys"]] <- agg_keys
-      mcmodule$node_list[[mc_name]][["keys"]] <- keys_names
+      mcmodule$node_list[[mc_name]][["keys"]] <- original_keys
       mcmodule$node_list[[mc_name]][["keep_variates"]] <- keep_variates
 
       # Update keys_names if it does not keep all variates
       if (!keep_variates) {
         keys_names <- agg_keys
+      } else {
+        keys_names <- unique(c(
+          original_keys,
+          mcmodule$node_list[[mc_name]][["keys"]]
+        ))
       }
     } else {
-      keys_names <- mcmodule$node_list[[mc_name]][["keys"]]
+      keys_names <- unique(c(
+        keys_names,
+        mcmodule$node_list[[mc_name]][["keys"]]
+      ))
     }
 
     if (!all_equal && mc_name %in% mc_inputs_names) {
@@ -1261,7 +1304,8 @@ trial_totals <- function(
           keys_names = keys_names,
           agg_keys = agg_keys,
           total_type = total_type,
-          keep_variates = keep_variates
+          keep_variates = keep_variates,
+          prefix = prefix
         )
 
         # Add summary if requested

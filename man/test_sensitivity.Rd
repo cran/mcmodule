@@ -3,7 +3,7 @@
 \docType{data}
 \name{test_sensitivity}
 \alias{test_sensitivity}
-\title{Test Sensitivity Data}
+\title{Test Sensitivity Data for Pathogens}
 \format{
 \subsection{test_sensitivity}{
 
@@ -20,6 +20,6 @@ A data frame with 2 rows and 4 columns:
 test_sensitivity
 }
 \description{
-A dataset containing test sensitivity values for two pathogens
+A dataset containing test sensitivity values for two pathogens.
 }
 \keyword{datasets}

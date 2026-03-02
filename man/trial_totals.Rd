@@ -24,46 +24,47 @@ trial_totals(
 )
 }
 \arguments{
-\item{mcmodule}{mcmodule object containing input data and node structure}
+\item{mcmodule}{(mcmodule object). Module containing input data and node structure.}
 
-\item{mc_names}{Vector of node names to process}
+\item{mc_names}{(character vector). Node names to process.}
 
-\item{trials_n}{Trial count column name}
+\item{trials_n}{(character). Trial count column name.}
 
-\item{subsets_n}{Subset count column name (optional)}
+\item{subsets_n}{(character, optional). Subset count column name. Default: NULL.}
 
-\item{subsets_p}{Subset prevalence column name (optional)}
+\item{subsets_p}{(character, optional). Subset prevalence column name. Default: NULL.}
 
-\item{name}{Custom name for output nodes (optional)}
+\item{name}{(character, optional). Custom name for output nodes. Default: NULL.}
 
-\item{prefix}{Prefix for output node names (optional)}
+\item{prefix}{(character, optional). Prefix for output node names. Default: NULL.}
 
-\item{combine_prob}{Combine probability of all nodes assuming independence (default: TRUE)}
+\item{combine_prob}{(logical). If TRUE, combine probability of all nodes assuming
+independence. Default: TRUE.}
 
-\item{all_suffix}{Suffix for combined node name (default: "all")}
+\item{all_suffix}{(character). Suffix for combined node name. Default: "all".}
 
-\item{level_suffix}{A list of suffixes for each hierarchical level (default: c(trial="trial",subset="subset",set="set"))}
+\item{level_suffix}{(list, optional). Suffixes for each hierarchical level.
+Default: c(trial="trial", subset="subset", set="set").}
 
-\item{mctable}{Data frame containing Monte Carlo nodes definitions (default: set_mctable())}
+\item{mctable}{(data frame, optional). Monte Carlo nodes definitions.
+Default: set_mctable().}
 
-\item{agg_keys}{Column names for aggregation (optional)}
+\item{agg_keys}{(character vector, optional). Column names for aggregation.
+Default: NULL.}
 
-\item{agg_suffix}{Suffix for aggregated node names (default: "hag")}
+\item{agg_suffix}{(character). Suffix for aggregated node names. Default: "hag".}
 
-\item{keep_variates}{whether to preserve individual values (default: FALSE)}
+\item{keep_variates}{(logical). If TRUE, preserve individual variate values.
+Default: FALSE.}
 
-\item{summary}{Include summary statistics if TRUE (default: TRUE)}
+\item{summary}{(logical). If TRUE, include summary statistics. Default: TRUE.}
 
-\item{data_name}{Data name used to create trials_n, subsets_n and subsets_p nodes if they don't exist in mcmodule (optional)}
+\item{data_name}{(character, optional). Data name used to create trials_n,
+subsets_n and subsets_p nodes if they don't exist in mcmodule. Default: NULL.}
 }
 \value{
-Updated mcmodule object containing:
-\itemize{
-\item Combined node probabilities
-\item Probabilities and counts at trial level
-\item Probabilities and counts at subset level
-\item Probabilities and counts at set level
-}
+Updated mcmodule object containing combined node probabilities and
+probabilities/counts at trial, subset, and set levels.
 }
 \description{
 Calculates probabilities and expected counts across hierarchical levels

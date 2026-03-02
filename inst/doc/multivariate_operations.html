@@ -572,17 +572,17 @@ generated in <code>trial_totals()</code> because it’s included in
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co"># Probability that at least one infected animal from an infected farm is not detected</span></span>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">mc_summary</span>(imports_mcmodule,<span class="st">&quot;no_detect_a_set&quot;</span>)[,<span class="sc">-</span><span class="dv">1</span>]</span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt;   pathogen origin      mean           sd       Min      2.5%       25%</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 1        a   nord 0.9999351 6.729257e-05 0.9995022 0.9997581 0.9999101</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.9999947 9.153405e-06 0.9998899 0.9999707 0.9999940</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; 3        a   east 1.0000000 8.787173e-10 1.0000000 1.0000000 1.0000000</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; 4        b   nord 0.9994302 8.088769e-04 0.9935978 0.9971028 0.9993713</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 5        b  south 1.0000000 5.171354e-14 1.0000000 1.0000000 1.0000000</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 1        a   nord 0.9999334 7.145601e-05 0.9994139 0.9997338 0.9999107</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.9999946 8.330518e-06 0.9999157 0.9999702 0.9999933</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; 3        a   east 1.0000000 1.075262e-09 1.0000000 1.0000000 1.0000000</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; 4        b   nord 0.9994149 8.261901e-04 0.9936272 0.9970205 0.9992854</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 5        b  south 1.0000000 4.348297e-14 1.0000000 1.0000000 1.0000000</span></span>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#&gt; 6        b   east 1.0000000 0.000000e+00 1.0000000 1.0000000 1.0000000</span></span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="co">#&gt;         50%       75%     97.5%       Max  nsv Na&#39;s</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#&gt; 1 0.9999564 0.9999830 0.9999949 0.9999986 1001    0</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#&gt; 2 0.9999980 0.9999993 0.9999999 1.0000000 1001    0</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#&gt; 1 0.9999573 0.9999816 0.9999946 0.9999980 1001    0</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#&gt; 2 0.9999977 0.9999994 0.9999999 1.0000000 1001    0</span></span>
 <span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="co">#&gt; 3 1.0000000 1.0000000 1.0000000 1.0000000 1001    0</span></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="co">#&gt; 4 0.9997308 0.9998989 0.9999803 0.9999946 1001    0</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="co">#&gt; 4 0.9997187 0.9998909 0.9999823 0.9999959 1001    0</span></span>
 <span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a><span class="co">#&gt; 5 1.0000000 1.0000000 1.0000000 1.0000000 1001    0</span></span>
 <span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a><span class="co">#&gt; 6 1.0000000 1.0000000 1.0000000 1.0000000 1001    0</span></span></code></pre></div>
 </div>
@@ -633,9 +633,9 @@ probability of being infected (<code>trial_p</code>).</p>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="fu">mc_summary</span>(imports_mcmodule,<span class="st">&quot;no_detect_a_set&quot;</span>, <span class="at">digits=</span><span class="dv">2</span>)[,<span class="sc">-</span><span class="dv">1</span>]</span>
 <span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt;   pathogen origin mean     sd  Min 2.5%  25%  50%  75% 97.5%  Max  nsv Na&#39;s</span></span>
 <span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 1        a   nord 0.38 0.0200 0.34 0.34 0.36 0.38 0.39  0.41 0.41 1001    0</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.30 0.0600 0.18 0.19 0.24 0.30 0.35  0.40 0.40 1001    0</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 3        a   east 0.61 0.0500 0.52 0.53 0.57 0.61 0.65  0.68 0.68 1001    0</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 4        b   nord 0.99 0.0082 0.97 0.97 0.98 0.99 0.99  1.00 1.00 1001    0</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.30 0.0600 0.18 0.19 0.24 0.30 0.36  0.40 0.40 1001    0</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 3        a   east 0.61 0.0400 0.52 0.53 0.57 0.61 0.64  0.68 0.68 1001    0</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 4        b   nord 0.99 0.0081 0.97 0.97 0.98 0.99 0.99  1.00 1.00 1001    0</span></span>
 <span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 5        b  south 0.96 0.0080 0.94 0.94 0.95 0.96 0.97  0.97 0.97 1001    0</span></span>
 <span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 6        b   east 0.97 0.0200 0.92 0.92 0.95 0.97 0.98  0.99 0.99 1001    0</span></span></code></pre></div>
 </div>

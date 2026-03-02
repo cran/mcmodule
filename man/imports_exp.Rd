@@ -3,7 +3,7 @@
 \docType{data}
 \name{imports_exp}
 \alias{imports_exp}
-\title{Expression for calculating import infection probability}
+\title{Expression for Calculating Import Infection Probability}
 \format{
 A quoted R expression containing the following variables:
 \describe{

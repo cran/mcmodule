@@ -2,18 +2,19 @@
 % Please edit documentation in R/mc_network.R
 \name{visNetwork_edges}
 \alias{visNetwork_edges}
-\title{Generate visNetwork Edge Table}
+\title{Generate Formatted visNetwork Edge Table}
 \usage{
 visNetwork_edges(mcmodule, inputs = FALSE)
 }
 \arguments{
-\item{mcmodule}{An mcmodule object}
+\item{mcmodule}{(mcmodule object). Module containing node relationships.}
 
-\item{inputs}{Include non-node inputs: data-sets, data-frames and columns (optional)}
+\item{inputs}{(logical). If TRUE, include non-node inputs. Default: FALSE.}
 }
 \value{
-A data frame containing edge information for visNetwork
+A data frame containing edge information for visNetwork with columns:
+from, to, and id.
 }
 \description{
-Creates a formatted edge table suitable for visualization with visNetwork.
+Creates a formatted edge table suitable for visualisation with visNetwork.
 }

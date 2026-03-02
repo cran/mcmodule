@@ -2,28 +2,33 @@
 % Please edit documentation in R/dim_match.R
 \name{mc_match}
 \alias{mc_match}
-\title{Match Monte Carlo Nodes}
+\title{Match Two Monte Carlo Nodes}
 \usage{
 mc_match(mcmodule, mc_name_x, mc_name_y, keys_names = NULL)
 }
 \arguments{
-\item{mcmodule}{Monte Carlo module}
+\item{mcmodule}{(mcmodule object). Module containing nodes.}
 
-\item{mc_name_x}{First node name}
+\item{mc_name_x}{(character). First mcnode name.}
 
-\item{mc_name_y}{Second node name}
+\item{mc_name_y}{(character). Second mcnode name.}
 
-\item{keys_names}{Names of key columns}
+\item{keys_names}{(character vector, optional). Column names for matching.
+Default: NULL.}
 }
 \value{
-List containing matched nodes and combined keys (keys_xy)
+A list containing matched nodes and combined keys (\code{keys_xy}).
 }
 \description{
-Matches two mcnodes by:
+Matches two mcnodes by aligning groups, scenarios, or adding missing
+groups across different scenarios.
+}
+\details{
+Matching proceeds in order:
 \enumerate{
-\item Group matching - Align nodes with same scenarios but different group order
-\item Scenario matching - Align nodes with same groups but different scenarios
-\item Null matching - Add missing groups across different scenarios
+\item Group matching — align nodes with same scenarios but different group order
+\item Scenario matching — align nodes with same groups but different scenarios
+\item Null matching — add missing groups across different scenarios
 }
 }
 \examples{

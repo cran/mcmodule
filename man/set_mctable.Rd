@@ -7,28 +7,19 @@
 set_mctable(data = NULL)
 }
 \arguments{
-\item{data}{Optional data frame containing MC table information. Must contain an 'mcnode' column.
-Other columns will be auto-filled if missing. If NULL, returns the current MC table.}
+\item{data}{(data frame, optional). mctable with at minimum an \code{mcnode} column.
+Other columns auto-filled if absent. If NULL, returns the current table.
+Default: NULL.}
 }
 \value{
-\itemize{
-\item If data = NULL: Returns the current MC table
-\item If data provided: Sets the new MC table and returns invisibly
-}
-The table contains the following columns:
-\itemize{
-\item mcnode - Character. Name of the Monte Carlo node (required)
-\item description - Character. Description of the parameter
-\item mc_func - Character. Probability distribution
-\item from_variable - Character. Variable name in the data table, if it is in a column with a name different from the mcnode
-\item transformation - Character. Transformation to be applied to the original column values
-\item sensi_analysis - Logical. Whether to include in sensitivity analysis
-}
+Current or newly set mctable. Columns include: mcnode (required),
+description, mc_func, from_variable, transformation, sensi_baseline,
+sensi_variation.
 }
 \description{
-Manages a Monte Carlo inputs table in the global package environment by either setting new data
-or retrieving the current table. The table stores information about Monte Carlo nodes including
-their descriptions, functions, dependencies, and sensitivity analysis settings.
+Manages the global mctable (Monte Carlo nodes reference table) by setting
+or retrieving its value. The table stores metadata about mcnodes including
+descriptions, functions, and sensitivity analysis parameters.
 }
 \examples{
 # Get current MC table
@@ -38,8 +29,7 @@ current_table <- set_mctable()
 mct <- data.frame(
   mcnode = c("h_prev", "w_prev"),
   description = c("Herd prevalence", "Within herd prevalence"),
-  mc_func = c("runif", "runif"),
-  sensi_analysis = c(TRUE, TRUE)
+  mc_func = c("runif", "runif")
 )
 set_mctable(mct)
 

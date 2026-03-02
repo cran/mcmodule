@@ -2,31 +2,30 @@
 % Please edit documentation in R/create_mcnodes.R
 \name{create_mcnodes}
 \alias{create_mcnodes}
-\title{Create Monte Carlo Nodes from Data and Configuration Table}
+\title{Create mcnodes from Data and Configuration Table}
 \usage{
 create_mcnodes(data, mctable = set_mctable(), envir = parent.frame())
 }
 \arguments{
-\item{data}{A data frame containing the input variables for creating Monte Carlo nodes}
+\item{data}{(data frame). Input data containing variables for mcnode creation.}
 
-\item{mctable}{A configuration table specifying MC node definitions. Must contain columns:
-\itemize{
-\item mcnode: Name of the Monte Carlo node
-\item mc_func: Distribution function to use (if applicable)
-\item transformation: Optional transformation to apply to input data
-\item from_variable: Optional source variable name for transformation
-}}
+\item{mctable}{(data frame). Configuration table with columns:
+mcnode, mc_func, transformation, from_variable.}
 
-\item{envir}{Environment where MC nodes will be created (default: parent.frame())}
+\item{envir}{(environment, optional). Environment where nodes are created.
+Default: parent.frame().}
 }
 \value{
-No return value, creates MC nodes in the specified environment
+NULL (invisibly). mcnodes created in \code{envir}.
 }
 \description{
-Creates Monte Carlo nodes (mcnodes) based on instructions provided in a configuration
-table (mctable) and input variables from a dataframe.
+Creates mcnodes based on mctable specifications and input data.
+Applies transformations and generates mcnodes in the calling environment.
 }
 \examples{
-create_mcnodes(data = imports_data, mctable = imports_mctable)
+create_mcnodes(
+  data = imports_data,
+  mctable = imports_mctable
+)
 
 }

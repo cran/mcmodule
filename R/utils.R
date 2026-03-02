@@ -1,10 +1,15 @@
-#' Add Group IDs to Data Frames
+#' Add Group Identifiers to Data Frame
 #'
-#' @param x First dataset
-#' @param by Grouping variables
-#' @param y Optional second dataset
-#' @return Dataframe or list of dataframes with added group IDs
-#' @import dplyr
+#' Adds group IDs for matching and alignment between data frames.
+#'
+#' @param x (data frame). First dataset.
+#' @param by (character vector, optional). Column names for grouping.
+#'   If NULL, auto-detected from categorical columns. Default: NULL.
+#' @param y (data frame, optional). Second dataset. If provided, aligns with `x`.
+#'   Default: NULL.
+#'
+#' @return Data frame or list of data frames with added group identifiers (g_id, g_row).
+#' @keywords internal
 
 add_group_id <- function(x, y = NULL, by = NULL) {
   if (!is.null(y)) {
@@ -104,12 +109,14 @@ add_group_id <- function(x, y = NULL, by = NULL) {
 }
 
 
-#' Match and align keys between two datasets
+#' Match and Align Keys Between Datasets
+#'
+#' Matches and aligns keys between two datasets for downstream operations.
 #'
 #' @param x First dataset containing keys to match
 #' @param y Second dataset containing keys to match
 #' @param keys_names Names of columns to use as matching keys. If NULL, uses common columns
-#' @return List containing:
+#' @return A list containing:
 #'   \item{x}{First dataset with group IDs}
 #'   \item{y}{Second dataset with group IDs}
 #'   \item{xy}{Matched datasets with aligned group and scenario IDs}

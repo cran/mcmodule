@@ -17,49 +17,52 @@ suppressMessages({
   })
 
   test_that("check_mctable works", {
-
-    example_mctable  <- data.frame(mcnode = c("x","y"),
-                                   description = c("Probability x", "Probability y"),
-                                   mc_func = c("runif", NA))
-
-    # Capture the warning and assign checked_example_mctable
-    expect_warning(
-      checked_example_mctable <- check_mctable(example_mctable),
-      "from_variable, transformation, sensi_analysis not specified"
+    example_mctable <- data.frame(
+      mcnode = c("x", "y"),
+      description = c("Probability x", "Probability y"),
+      mc_func = c("runif", NA)
     )
 
-    expect_equal(names(checked_example_mctable),names(set_mctable()))
+    expect_no_warning(
+      checked_example_mctable <- check_mctable(example_mctable)
+    )
 
+    expect_equal(names(checked_example_mctable), names(set_mctable()))
   })
 
   test_that("check_mctable works for incomplete mctable within functions", {
+    example_data <- data.frame(
+      category_1 = c("a", "b", "a", "b"),
+      category_2 = c("blue", "blue", "red", "red"),
+      x_min = c(0.07, 0.3, 0.2, 0.5),
+      x_max = c(0.08, 0.4, 0.3, 0.6),
+      y = c(0.01, 0.02, 0.03, 0.04)
+    )
 
-    example_data  <-data.frame(category_1=c("a","b","a","b"),
-                               category_2=c("blue","blue","red","red"),
-                               x_min=c(0.07,0.3,0.2,0.5),
-                               x_max=c(0.08,0.4,0.3,0.6),
-                               y = c(0.01,0.02,0.03,0.04))
-
-    example_data_keys <-list(
+    example_data_keys <- list(
       example_data = list(
-        cols=names(example_data),
-        keys=c("category_1", "category_2")))
+        cols = names(example_data),
+        keys = c("category_1", "category_2")
+      )
+    )
 
-    example_mctable  <- data.frame(mcnode = c("x","y"),
-                                   description = c("Probability x", "Probability y"),
-                                   mc_func = c("runif", NA))
+    example_mctable <- data.frame(
+      mcnode = c("x", "y"),
+      description = c("Probability x", "Probability y"),
+      mc_func = c("runif", NA)
+    )
 
-    example_exp<-quote({
+    example_exp <- quote({
       result <- x * y
     })
 
-    expect_warning(
+    expect_no_warning(
       example_mcmodule <- eval_module(
         exp = c(example = example_exp),
         data = example_data,
-        mctable =example_mctable,
-        data_keys = example_data_keys),
-      "not specified")
+        mctable = example_mctable,
+        data_keys = example_data_keys
+      )
+    )
   })
-
 })

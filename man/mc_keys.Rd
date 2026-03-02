@@ -2,22 +2,23 @@
 % Please edit documentation in R/dim_match.R
 \name{mc_keys}
 \alias{mc_keys}
-\title{Get Monte Carlo Node Keys}
+\title{Extract Key Columns from Monte Carlo Nodes}
 \usage{
 mc_keys(mcmodule, mc_name, keys_names = NULL)
 }
 \arguments{
-\item{mcmodule}{Monte Carlo module containing nodes and data}
+\item{mcmodule}{(mcmodule object). Module containing node.}
 
-\item{mc_name}{Name of the node to extract keys from}
+\item{mc_name}{(character). Node name to extract keys from.}
 
-\item{keys_names}{Vector of column names to extract (optional)}
+\item{keys_names}{(character vector, optional). Column names to extract.
+If NULL, uses all keys for the node. Default: NULL.}
 }
 \value{
-Dataframe with scenario_id and requested key columns
+A data frame with scenario_id and requested key columns.
 }
 \description{
-Extracts key columns from Monte Carlo node's associated data.
+Extracts key columns from a mcnode's associated data.
 }
 \examples{
 keys_df <- mc_keys(imports_mcmodule, "w_prev")

@@ -23,6 +23,6 @@ Simulated data for demonstration purposes
 animal_imports
 }
 \description{
-A dataset containing information about animal imports from three different regions
+A dataset containing information about animal imports from three different regions.
 }
 \keyword{datasets}

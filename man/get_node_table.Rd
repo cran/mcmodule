@@ -2,23 +2,24 @@
 % Please edit documentation in R/mc_network.R
 \name{get_node_table}
 \alias{get_node_table}
-\title{Generate Node Table for Network Construction}
+\title{Generate Node Table for Network Visualisation}
 \usage{
 get_node_table(mcmodule, variate = 1, inputs = FALSE)
 }
 \arguments{
-\item{mcmodule}{An mcmodule object containing node information}
+\item{mcmodule}{(mcmodule object). Module containing node information.}
 
-\item{variate}{Integer indicating which variate to extract (default: 1)}
+\item{variate}{(integer). Which variate to extract. Default: 1.}
 
-\item{inputs}{Include non-node inputs: data-sets, data-frames and columns (optional)}
+\item{inputs}{(logical). If TRUE, include non-node inputs (datasets,
+dataframes, and columns). Default: FALSE.}
 }
 \value{
-A data frame containing node information and attributes
+A data frame containing node information and attributes.
 }
 \description{
-Creates a data frame containing node information from a Monte Carlo module network.
-Includes node attributes, values, and relationships.
+Creates a data frame containing node information from a Monte Carlo module
+network. Includes node attributes, values, and relationships.
 }
 \examples{
 node_table <- get_node_table(imports_mcmodule)

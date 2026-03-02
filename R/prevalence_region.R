@@ -1,6 +1,6 @@
-#' Regional Prevalence Data
+#' Regional Pathogen Prevalence Data
 #'
-#' A dataset containing prevalence information for two pathogens across three regions
+#' A dataset containing prevalence information for two pathogens across three regions.
 #'
 #' @format ## prevalence_region
 #' A data frame with 6 rows and 4 columns:

@@ -2,13 +2,13 @@
 % Please edit documentation in R/set_mctable.R
 \name{reset_mctable}
 \alias{reset_mctable}
-\title{Resets the Monte Carlo inputs table}
+\title{Reset Monte Carlo Inputs Table}
 \usage{
 reset_mctable()
 }
 \value{
-An empty data frame with the standard mctable structure
+Empty data frame with standard mctable columns.
 }
 \description{
-Resets the Monte Carlo inputs table
+Clears and resets the global mctable to an empty state with standard columns.
 }

@@ -11,7 +11,7 @@ suppressMessages({
     # Check class and structure
     expect_equal(class(result), "mcmodule")
     expect_true(all(
-      c("data", "exp", "node_list", "modules") %in% names(result)
+      c("data", "exp", "node_list") %in% names(result)
     ))
 
     # Test error handling for missing prev_mcmodule
@@ -25,7 +25,7 @@ suppressMessages({
         mctable = imports_mctable,
         data_keys = imports_data_keys
       ),
-      "prev_mcmodule.*needed but not provided"
+      "nodes are not present in data or in prev_mcmodule"
     )
 
     # Test with multiple expressions
@@ -43,8 +43,8 @@ suppressMessages({
       data_keys = imports_data_keys
     )
 
-    # Verify multiple modules were created
-    expect_equal(multi_result$modules, c("imports", "additional"))
+    # Verify multiple expressions were evaluated
+    expect_equal(names(multi_result$exp), c("imports", "additional"))
 
     # Check that variables from first module are available in second
     expect_true("no_detect_a" %in% names(multi_result$node_list))
@@ -121,7 +121,8 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_analysis = c(FALSE)
+      sensi_baseline = c(NA_character_),
+      sensi_variation = c(NA_character_)
     )
     current_exp <- quote({
       imported_contaminated <- no_detect_a_set * survival_p
@@ -233,7 +234,8 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_analysis = c(FALSE)
+      sensi_baseline = c(NA_character_),
+      sensi_variation = c(NA_character_)
     )
 
     # Test expression
@@ -293,7 +295,8 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_analysis = c(FALSE)
+      sensi_baseline = c(NA_character_),
+      sensi_variation = c(NA_character_)
     )
     # Get previous module
     imports_mcmodule <- agg_totals(
@@ -359,7 +362,8 @@ suppressMessages({
       mc_func = c(NA),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_analysis = c(FALSE)
+      sensi_baseline = c(NA_character_),
+      sensi_variation = c(NA_character_)
     )
 
     # Test expression
@@ -426,7 +430,8 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_analysis = c(FALSE)
+      sensi_baseline = c(NA_character_),
+      sensi_variation = c(NA_character_)
     )
 
     res1 <- eval_module(
@@ -517,7 +522,8 @@ suppressMessages({
       mc_func = NA,
       from_variable = NA,
       transformation = NA,
-      sensi_analysis = FALSE
+      sensi_baseline = NA_character_,
+      sensi_variation = NA_character_
     )
 
     # Run eval_module with both previous modules
@@ -555,5 +561,173 @@ suppressMessages({
       c("prev_value_x", "prev_value_y", "value")
     )
     expect_equal(result_mcmodule$node_list$result$data_name, c("current_data"))
+  })
+
+  test_that("eval_module creates input nodes from data without mctable", {
+    test_data <- data.frame(external_input = c(0.1, 0.2, 0.3))
+    test_exp <- quote({
+      result <- external_input * 2
+    })
+
+    expect_message(
+      result_mcmodule <- eval_module(
+        exp = c(test = test_exp),
+        data = test_data
+      ),
+      "Creating mcnodes from data"
+    )
+
+    expect_true("external_input" %in% names(result_mcmodule$node_list))
+    expect_true("result" %in% names(result_mcmodule$node_list))
+    expect_true(is.mcnode(result_mcmodule$node_list$external_input$mcnode))
+  })
+
+  test_that("eval_module warns when inputs are in data but not in provided mctable (non-empty mctable)", {
+    test_data <- data.frame(external_input = c(0.1, 0.2, 0.3))
+    test_exp <- quote({
+      result <- external_input * 2
+    })
+
+    # mctable contains a different node, so external_input is missing from it
+    some_mctable <- data.frame(
+      mcnode = c("other_node"),
+      description = c("other"),
+      mc_func = c(NA),
+      from_variable = c(NA),
+      transformation = c(NA),
+      sensi_baseline = c(NA_character_),
+      sensi_variation = c(NA_character_),
+      stringsAsFactors = FALSE
+    )
+
+    expect_message(
+      result_mcmodule <- eval_module(
+        exp = c(test = test_exp),
+        data = test_data,
+        mctable = some_mctable,
+        data_keys = list()
+      ),
+      "The following nodes are present in data but not in the mctable: external_input"
+    )
+
+    expect_true("external_input" %in% names(result_mcmodule$node_list))
+    expect_true("result" %in% names(result_mcmodule$node_list))
+    expect_true(is.mcnode(result_mcmodule$node_list$external_input$mcnode))
+  })
+
+  test_that("eval_module deals with mcdata() and mcstoc() functions", {
+    test_data <- data.frame(
+      category = c("a", "b"),
+      input_a_min = c(0.1, 0.2),
+      input_a_max = c(0.2, 0.3)
+    )
+
+    test_exp1 <- quote({
+      input_b <- mcdata(data = c(0.5, 1.5), type = "0")
+      input_c <- mcstoc(runif, min = 0, max = 1)
+      ouput_ab <- mcstoc(rnorm, mean = input_b, sd = input_a)
+      result <- ouput_ab + input_c
+    })
+
+    test_mctable <- data.frame(
+      mcnode = c("input_a"),
+      mc_func = c("runif"),
+      description = c("Test input A"),
+      stringsAsFactors = FALSE,
+      from_variable = c(NA),
+      transformation = c(NA),
+      sensi_baseline = c(NA_character_),
+      sensi_variation = c(NA_character_)
+    )
+
+    result_mcmodule <- eval_module(
+      exp = c(test = test_exp1),
+      data = test_data,
+      mctable = test_mctable
+    )
+
+    expect_true(result_mcmodule$node_list$ouput_ab$function_call)
+    expect_true(result_mcmodule$node_list$ouput_ab$created_in_exp)
+    expect_equal(
+      dim(result_mcmodule$node_list$ouput_ab$mcnode),
+      dim(result_mcmodule$node_list$result$mcnode)
+    )
+    expect_equal(
+      result_mcmodule$node_list$result$inputs,
+      c("ouput_ab", "input_c")
+    )
+  })
+
+  test_that("eval_module works with use_baseline parameter", {
+    # Test basic use_baseline functionality
+    result_baseline <- eval_module(
+      exp = c(imports = imports_exp),
+      data = imports_data,
+      mctable = imports_mctable,
+      data_keys = imports_data_keys,
+      use_baseline = c("h_prev", "w_prev")
+    )
+
+    # Verify it created an mcmodule
+    expect_equal(class(result_baseline), "mcmodule")
+    expect_true("inf_a" %in% names(result_baseline$node_list))
+
+    # Verify mcnodes were created successfully
+    expect_true(is.mcnode(result_baseline$node_list$inf_a$mcnode))
+    expect_true(is.mcnode(result_baseline$node_list$w_prev$mcnode))
+  })
+
+  test_that("eval_module works with use_variation parameter", {
+    # Test basic use_variation functionality
+    result_variation <- eval_module(
+      exp = c(imports = imports_exp),
+      data = imports_data,
+      mctable = imports_mctable,
+      data_keys = imports_data_keys,
+      use_variation = c("h_prev", "test_sensi")
+    )
+
+    # Verify it created an mcmodule
+    expect_equal(class(result_variation), "mcmodule")
+    expect_true("inf_a" %in% names(result_variation$node_list))
+
+    # Verify mcnodes were created with variation applied
+    expect_true(is.mcnode(result_variation$node_list$inf_a$mcnode))
+    expect_true(is.mcnode(result_variation$node_list$test_sensi$mcnode))
+  })
+
+  test_that("eval_module works with both use_baseline and use_variation", {
+    # Test combined use_baseline and use_variation on same node
+    result_combined <- eval_module(
+      exp = c(imports = imports_exp),
+      data = imports_data,
+      mctable = imports_mctable,
+      data_keys = imports_data_keys,
+      use_baseline = c("h_prev"),
+      use_variation = c("h_prev")
+    )
+
+    # Verify it created an mcmodule
+    expect_equal(class(result_combined), "mcmodule")
+    expect_true("inf_a" %in% names(result_combined$node_list))
+
+    # Verify mcnodes were created
+    expect_true(is.mcnode(result_combined$node_list$inf_a$mcnode))
+  })
+
+  test_that("eval_module handles NULL defaults for OAT parameters", {
+    # Test that NULL defaults work (no errors)
+    result_null_defaults <- eval_module(
+      exp = c(imports = imports_exp),
+      data = imports_data,
+      mctable = imports_mctable,
+      data_keys = imports_data_keys,
+      use_baseline = NULL,
+      use_variation = NULL
+    )
+
+    expect_equal(class(result_null_defaults), "mcmodule")
+    expect_true("inf_a" %in% names(result_null_defaults$node_list))
+    expect_true(is.mcnode(result_null_defaults$node_list$inf_a$mcnode))
   })
 })

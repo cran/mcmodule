@@ -31,7 +31,7 @@ The `mc2d` R package [@mc2d] provides tools to build and analyse models involvin
 1.  Organize risk analysis in independent flexible modules
 2.  Perform multivariate mcnode operations
 3.  Automate the creation of mcnodes
-4.  Visualize risk analysis models
+4.  visualise risk analysis models
 
 ## Multivariate Monte-Carlo simulations
 
@@ -270,7 +270,7 @@ From now on we will use only the merged `imports_data` table. However, it is use
 
 -   `test_sensitivity` provided information by `"pathogen"` only
 
-The resulting merged table, `imports_data`, will therefore have two keys: `"pathogen"` and `"origin"`. However, not all parameters will use both keys, for example, `"test_sensi"` only has information by `"pathogen"`. Knowing the keys for each parameter is crucial when performing multivariate operations, such as [calculating totals](https://nataliaciria.github.io/mcmodule/articles/intro.html#calculating-totals).
+The resulting merged table, `imports_data`, will therefore have two keys: `"pathogen"` and `"origin"`. However, not all parameters will use both keys, for example, `"test_sensi"` only has information by `"pathogen"`. Knowing the keys for each parameter is crucial when performing multivariate operations, such as [calculating totals](https://nataliaciria.com/mcmodule/articles/intro.html#calculating-totals).
 
 To make these relationships explicit in the model, we need to provide the data keys. These are defined in a list with one element for each input dataset, specifying both the columns and the keys for each dataset.
 
@@ -305,9 +305,11 @@ With values and keys established, we still need some information to build our st
 
 -   transformation: Transformation to be applied to the original column values
 
--   sensi_analysis: Whether to include in sensitivity analysis[^2]
+-   sensi_baseline: Parameters for baseline mock distribution [^2]
 
-[^2]: This column is planned for future versions, as functions for uncertainty, sensitivity, and convergence analysis are currently under development and will be included in the next package
+-   sensi_variation: OAT variation expression using `value` placeholder[^2]
+
+[^2]: These columns are used for local sensitivity (OAT) via `eval_module()`.
 
 Here we have the `imports_mctable` for our example. While the mctable can be hard-coded in R, it's more efficient to prepare it in a CSV or other external file. This approach also allows the table to be included as part of the model documentation.
 
@@ -332,7 +334,7 @@ For encoding categorical variables as mcnodes (or any other data transformation)
 
 ## Expressions
 
-Finally, we need to write the model's mathematical expression. These expressions should ideally include only arithmetic operations, not R functions (with some exceptions that will be covered later in "[tricks and tweaks](https://nataliaciria.github.io/mcmodule/articles/intro.html#tricks-and-tweaks)"). We'll wrap them using `quote()` so they aren't executed immediately but stored for later evaluation with `eval_model()`.
+Finally, we need to write the model's mathematical expression. These expressions should ideally include only arithmetic operations, not R functions (with some exceptions that will be covered later in "[tricks and tweaks](https://nataliaciria.com/mcmodule/articles/intro.html#tricks-and-tweaks)"). We'll wrap them using `quote()` so they aren't executed immediately but stored for later evaluation with `eval_model()`.
 
 ```{r}
 imports_exp <- quote({
@@ -348,13 +350,44 @@ imports_exp <- quote({
 })
 ```
 
+### Creating mcnodes within expressions
+
+Starting with version 1.2.0, you can create mcnodes directly inside expressions using `mcstoc()` or `mcdata()` from the `mc2d` package. However, these functions do not behave exactly as they do in `mc2d` when used within `mcmodule`. Keep the following points in mind:
+
+- Do not set `nvariates`. It is automatically set to match the number of rows in your data.
+- Use `type = "V"` (variability, the default) or `type = "0"` (deterministic).
+- All other `mcstoc()` and `mcdata()` arguments behave as documented in `mc2d`.
+
+```{r}
+# Example expression with mcnodes created on-the-fly
+imports_exp_inline <- quote({
+  # Probability that an animal in an infected herd is infected
+  infected <- w_prev
+  
+  # Create a clinic sensitivity parameter directly in the expression
+  # (no need to specify nvariates, it's inferred from data rows)
+  clinic_sensi <- mcstoc(runif, min = 0.6, max = 0.8)
+  
+  # Probability an animal is tested and is a false negative
+  # Now accounting for both test sensitivity and clinic sensitivity
+  false_neg <- infected * test_origin * (1 - test_sensi) * (1 - clinic_sensi)
+  
+  # Probability an animal is not tested but detected at clinic
+  no_test <- infected * (1 - test_origin) * (1 - clinic_sensi)
+  
+  # Probability an animal is not detected
+  no_detect <- false_neg + no_test
+})
+```
+
+
 ## Evaluating an mcmodule
 
 With all components in place, we're now ready to create our first mcmodule using `eval_module()`.
 
 ```{r}
 imports <- eval_module(
-  exp = c(imports = imports_exp),
+  exp = c(imports = imports_exp_inline),
   data = imports_data,
   mctable = imports_mctable,
   data_keys = imports_data_keys
@@ -390,7 +423,7 @@ When arithmetic operations are performed between nodes in mcmodule, they are app
 
 ## Visualizing
 
-We can visualize an mc_module with the `mc_network()` function. For this, you will need to have `igraph` [@igraph] and `visNetwork` [@visnetwork] installed.
+We can visualise an mc_module with the `mc_network()` function. For this, you will need to have `igraph` [@igraph] and `visNetwork` [@visnetwork] installed.
 
 In these network visualizations, input datasets appear in blue, input data files, input columns and input mcnodes appear in different shades of dark-grey-blue, output mcnodes in green, and total mcnodes (as we will see later) in orange. The numbers displayed when clicked correspond to the median and the 95% confidence interval of the first variate of each mcnode.
 
@@ -408,9 +441,50 @@ In the imports mcmodule, we can already see the raw mcnode results for the proba
 mc_summary(mcmodule = imports, mc_name = "no_detect")
 ```
 
+## Filtering
+
+Sometimes you may want to focus your analysis on specific subsets of your data, such as a particular pathogen or region. The `mc_filter()` function allows you to filter mcnodes based on conditions, similar to `dplyr::filter()`.
+
+### Filtering a single condition
+
+Let's filter the `no_detect` node to only include results for pathogen "a":
+
+```{r}
+# Filter for pathogen a only
+imports <- mc_filter(
+  imports,
+  "no_detect",
+  pathogen == "a",
+  name = "no_detect_pathogen_a"
+)
+
+# View the filtered results
+imports$node_list$no_detect_pathogen_a$summary
+```
+
+### Filtering with multiple conditions
+
+You can also apply multiple filter conditions at once. For example, to analyze only pathogen "b" from the "nord" region:
+
+```{r}
+# Filter for pathogen b from nord region
+imports <- mc_filter(
+  imports,
+  "no_detect",
+  pathogen == "b",
+  origin == "nord",
+  name = "no_detect_b_nord"
+)
+
+# View the filtered results
+imports$node_list$no_detect_b_nord$summary
+```
+
+The filtered nodes maintain all the metadata from the original node and can be used in subsequent calculations just like any other node in the mcmodule.
+
 ## Calculating totals
 
-Most of the following probability calculations are based on Chapter 5 of the *Handbook on Import Risk Analysis for Animals and Animal Products Volume 2. Quantitative risk assessment* [@Murray2004]. More details can be found on the [*Multivariate operations*](https://nataliaciria.github.io/mcmodule/articles/multivariate_operations.html) vignette.
+Most of the following probability calculations are based on Chapter 5 of the *Handbook on Import Risk Analysis for Animals and Animal Products Volume 2. Quantitative risk assessment* [@Murray2004]. More details can be found on the [*Multivariate operations*](https://nataliaciria.com/mcmodule/articles/multivariate_operations.html) vignette.
 
 ### Single-level trials
 
@@ -492,7 +566,7 @@ imports$node_list$no_detect_subset$summary
 
 **Multiple group multilevel trials**
 
-This `trial_totals()` application is beyond the scope of this vignette, but there are cases where you might have several variates from the same subset. For example we could deal with different animal categories (cow, calf, bull...) from the same farm. In this case, the infection probability of animals within the same farm is not independent, and this should be taken into account. For more information, see [Multilevel trials](https://nataliaciria.github.io/mcmodule/articles/multivariate_operations.html#multilevel-trials) in the *Multivariate operations* vignette.
+This `trial_totals()` application is beyond the scope of this vignette, but there are cases where you might have several variates from the same subset. For example we could deal with different animal categories (cow, calf, bull...) from the same farm. In this case, the infection probability of animals within the same farm is not independent, and this should be taken into account. For more information, see [Multilevel trials](https://nataliaciria.com/mcmodule/articles/multivariate_operations.html#multilevel-trials) in the *Multivariate operations* vignette.
 
 ![*Selection (in blue) of 2 cows and 5 calves from 3 farms, with a 20% regional herd prevalence and 50% within-herd prevalence for adult animals and 30% within-herd prevalence for young animals.*](images/mcmodule_multilevel_trial_drawing_groups.png)
 
@@ -511,7 +585,7 @@ imports <- agg_totals(
 imports$node_list$no_detect_set_agg$summary
 ```
 
-Now we can visualize our mcmodule again and see all these new nodes created by the totals functions.
+Now we can visualise our mcmodule again and see all these new nodes created by the totals functions.
 
 ```{r}
 mc_network(imports, legend = TRUE)
@@ -591,10 +665,7 @@ transmission_data_keys <- list(transmission_data = list(
 transmission_mctable <- data.frame(
   mcnode = c("inf_dc"),
   description = c("Probability of infection via direct contact"),
-  mc_func = c("runif"),
-  from_variable = c(NA),
-  transformation = c(NA),
-  sensi_analysis = c(FALSE)
+  mc_func = c("runif")
 )
 dir_contact_exp <- quote({
   dir_contact <- no_detect * inf_dc
@@ -624,6 +695,64 @@ mc_network(intro, legend = TRUE)
 ```
 
 The combined module now contains all nodes and metadata from its components, enabling you to analyze interactions and aggregate results across the entire risk pathway.
+
+## Getting module information
+
+The `mcmodule_info()` function provides comprehensive metadata about your mcmodule structure, including composition information, keys for each variate, and global keys used across the module.
+
+```{r}
+info <- mcmodule_info(intro)
+
+# Check if module is combined or raw
+info$is_combined
+
+# Number of component modules
+info$n_modules
+
+# Module and expression information
+info$module_exp_data
+
+# Keys for each variate
+head(info$data_keys)
+
+# Global key names
+info$global_keys
+```
+
+# Model analysis
+
+## Correlation analysis
+
+The `mcmodule_corr()` function calculates correlation coefficients between input and output nodes across your mcmodule. This helps identify which input parameters have the strongest influence on your results. It is based on `mc2d::tornado()` but applied to many distinct variates.
+
+```{r, eval=FALSE}
+# Calculate correlations using Spearman's method (default)
+cor_results <- mcmodule_corr(imports)
+
+# View correlation results
+head(cor_results)
+
+# Use different correlation method
+cor_pearson <- mcmodule_corr(imports, method = "pearson")
+cor_kendall <- mcmodule_corr(imports, method = "kendall")
+```
+
+## Convergence analysis
+
+The `mcmodule_converg()` function assesses whether your Monte Carlo simulations have run for enough iterations to produce stable results. It tracks how statistics (mean, median, quantiles) change as iterations accumulate.
+
+```{r, eval=FALSE}
+# Check convergence with default settings
+converg_results <- mcmodule_converg(imports)
+
+# Custom convergence analysis
+# Check the last 10% of iterations with stricter threshold
+converg_strict <- mcmodule_converg(
+  imports,
+  from_quantile = 0.90,
+  conv_threshold = 0.01
+)
+```
 
 # Tricks and tweaks
 
@@ -690,10 +819,13 @@ h_prev
 mc_summary(data = prevalence_region, mcnode = h_prev, keys_names = c("pathogen", "origin"))
 ```
 
+
 # Next steps
 
-We are planning to add functions to perform uncertainty, sensitivity, and convergence analysis in multivariate, modular models. To be notified when it is released, you can watch our repository: <https://github.com/NataliaCiria/mcmodule>.
+We are currently planning to add **global sensitivity analysis** based on Morris screening, using the existing local sensitivity (OAT) support (see `eval_module()`).
 
-We encourage you to explore the package further, adapt it to your own use cases, and contribute feedback or improvements. To report bugs, please visit: <https://github.com/NataliaCiria/mcmodule/issues> or contact [mail\@nataliaciria.com](mailto:mail@nataliaciria.com).
+We are also working on building compatibility with other R packages such as `freedom`, to facilitate integration with broader risk assessment workflows.
+
+To stay updated on new releases and planned features, watch our repository: <https://github.com/NataliaCiria/mcmodule>. We encourage you to explore the package further, adapt it to your own use cases, and contribute feedback or improvements. To report bugs, please visit: <https://github.com/NataliaCiria/mcmodule/issues> or contact [mail\@nataliaciria.com](mailto:mail@nataliaciria.com).
 
 # References
