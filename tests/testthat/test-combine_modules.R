@@ -140,4 +140,14 @@ test_that("mcmodule_info handles combined modules", {
     result$module_exp_data$exp,
     c("exp_a", "exp_b1", "exp_b2", "exp_c")
   )
+
+  # node counts and traceability info should be present
+  det <- mcmodule_info(combined_abc)
+  expect_true(is.list(det))
+  expect_true("module_exp_data" %in% names(det))
+  # If node_counts available, it should be a data.frame with module names
+  if ("node_counts" %in% names(det)) {
+    expect_s3_class(det$node_counts, "data.frame")
+    expect_true(all(det$node_counts$module %in% det$module_names))
+  }
 })

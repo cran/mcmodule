@@ -6,7 +6,7 @@
 \usage{
 eval_module(
   exp,
-  data,
+  data = NULL,
   param_names = NULL,
   prev_mcmodule = NULL,
   summary = FALSE,
@@ -15,7 +15,8 @@ eval_module(
   match_keys = NULL,
   keys = NULL,
   overwrite_keys = NULL,
-  use_baseline = NULL,
+  sample_design = set_sample_design(),
+  if_not_sampled = c("median", "mean", "max", "min"),
   use_variation = NULL
 )
 }
@@ -23,7 +24,12 @@ eval_module(
 \item{exp}{(language or list). Model expression or list of expressions to evaluate.}
 
 \item{data}{(data frame). Input data; number of rows determines nvariates for
-\code{mcstoc()}/\code{mcdata()} in expressions. Default: required.}
+\code{\link[mc2d:mcstoc]{mc2d::mcstoc()}}/\code{\link[mc2d:mcnode]{mc2d::mcdata()}} in expressions when \code{sample_design} is not
+provided. With \code{sample_design}, inline \code{nvariates} is removed and defaults to
+\enumerate{
+\item Default: NULL (can only be NULL
+if \code{sample_design} with all inputs is provided).
+}}
 
 \item{param_names}{(named character vector, optional). Names to rename parameters.
 Default: NULL.}
@@ -36,10 +42,12 @@ Default: FALSE.}
 
 \item{mctable}{(data frame). Reference table for mcnodes with \code{mcnode} and
 \code{mc_func} columns. If NULL or not provided, nodes matching \code{data} column names
-are automatically created. Default: empty mctable().}
+are automatically created. If \code{sample_design} is provided, required inputs
+present in \code{sample_design} are created from it even when absent from
+\code{mctable}. Default \code{\link[=set_mctable]{set_mctable()}}.}
 
 \item{data_keys}{(list). Data structure and keys for input data. Default:
-\code{set_data_keys()}.}
+\code{\link[=set_data_keys]{set_data_keys()}}.}
 
 \item{match_keys}{(character vector, optional). Keys to match \code{prev_mcmodule}
 mcnodes with current data. Default: NULL.}
@@ -49,8 +57,16 @@ mcnodes with current data. Default: NULL.}
 \item{overwrite_keys}{(logical or NULL). If NULL (default), becomes TRUE when
 \code{data_keys} is NULL or empty; otherwise FALSE.}
 
-\item{use_baseline}{(character vector, optional). mcnode names to override with
-\code{sensi_baseline} values from \code{mctable}. Default: NULL.}
+\item{sample_design}{(matrix, data frame, or list, optional). Sampling
+design used to create input nodes via \code{\link[=matrix_to_mcnodes]{matrix_to_mcnodes()}}. Accepts a
+matrix/data frame or a list with element \code{X} (typically output of
+\link[sensitivity:sensitivity-package]{sensitivity::sensitivity} functions). Columns matching expression input nodes are created
+from this matrix. Defaults to \code{\link[=set_sample_design]{set_sample_design()}}.}
+
+\item{if_not_sampled}{(character). How to fill input nodes that are required
+by the expression but do not appear as columns in \code{sample_design}. A fixed
+value is computed from \code{mctable$sample_space} and replicated across all
+samples. Options are \code{"median"} (default), \code{"mean"}, \code{"max"}, and \code{"min"}.}
 
 \item{use_variation}{(character vector, optional). mcnode names to apply
 \code{sensi_variation} expression from \code{mctable} before node creation. Default: NULL.}
@@ -66,25 +82,29 @@ An mcmodule object (list) with elements:
 \description{
 Evaluates a model expression or list of expressions to produce an mcmodule
 object containing simulation results and metadata. Expression may use
-\code{mcstoc()} and \code{mcdata()} to create nodes inline; nvariates is automatically
-inferred from the data.
+\code{\link[mc2d:mcstoc]{mc2d::mcstoc()}} and \code{\link[mc2d:mcnode]{mc2d::mcdata()}} to create nodes inline; nvariates is automatically
+inferred from the data unless \code{sample_design} is provided.
 }
 \details{
 \itemize{
-\item mcstoc() and mcdata() may be used directly inside model expressions.
+\item \code{\link[mc2d:mcstoc]{mc2d::mcstoc()}} and \code{\link[mc2d:mcnode]{mc2d::mcdata()}} may be used directly inside model expressions.
 When these are used you should NOT explicitly supply nvariates, nvariates
 will be inferred automatically as the number of rows in the input \code{data}.
+If \code{sample_design} is provided, any inline \code{nvariates} argument is removed
+and the default \code{nvariates = 1} is used for inline nodes.
 Other arguments are preserved, for example specify \code{type = "0"} when
-providing data without variability/uncertainty (see ?mcdata and ?mcstoc).
+providing data without variability/uncertainty (see \code{\link[mc2d:mcnode]{mc2d::mcdata()}} and \code{\link[mc2d:mcstoc]{mc2d::mcstoc()}}).
 \item By design, mcmodule supports type = "V" (the default, with variability) and
 type = "0" (no variability) nodes. Expressions that specify other node
 types ("U" or "VU") are not fully supported and downstream compatibility is not
 guaranteed.
 \item An explicit \code{mctable} is optional but highly recommended. If no mctable is
 provided, any model nodes that match column names in \code{data} will be built
-from the data. If a \code{mctable} is provided and a node is not found there but
-exists as a data column, a warning will be issued and the node will be created
-from the data column.
+from the data. If a \code{mctable} is provided and a node is
+not found there but exists as a data column, a warning will be issued and
+the node will be created from the data column. When \code{sample_design} is provided,
+required inputs that match \code{sample_design} column names are also created from
+\code{sample_design} even if they are not listed in \code{mctable}.
 \item Within expressions reference input mcnodes by their bare names (e.g.
 column1). Do not use \code{data$column1} or \code{data["column1"]}.
 }
@@ -93,22 +113,23 @@ column1). Do not use \code{data$column1} or \code{data["column1"]}.
 # Basic usage with single expression
 # Build a quoted expression using mcnodes defined in mctable or built with
 # mcstoc()/mcdata within the expression (do NOT set nvariates, it is
-# inferred from nrow(data) when evaluated by eval_module()).
+# inferred from nrow(data) when evaluated by eval_module() unless
+# sample_design is provided, in which case inline nvariates defaults to 1).
 expr_example <- quote({
   # Within-herd prevalence (assigned from a pre-built mcnode w_prev)
-  inf_a <- w_prev
+  infected <- w_prev
 
   # Estimate of clinic sensitivity
   clinic_sensi <- mcstoc(runif, min = 0.6, max = 0.8)
 
   # Probability an infected animal is tested in origin and not detected
-  false_neg_a <- inf_a * test_origin * (1 - test_sensi) * (1 - clinic_sensi)
+  false_neg <- infected * test_origin * (1 - test_sensi) * (1 - clinic_sensi)
 
   # Probability an infected animal is not tested and not detected
-  no_test_a <- inf_a * (1 - test_origin) * (1 - clinic_sensi)
+  no_test <- infected * (1 - test_origin) * (1 - clinic_sensi)
 
-  # no_detect_a: total probability an infected animal is not detected
-  no_detect_a <- false_neg_a + no_test_a
+  # no_detect: total probability an infected animal is not detected
+  no_detect <- false_neg + no_test
 })
 
 # Evaluate

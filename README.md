@@ -8,7 +8,7 @@
 
 <!-- badges: end -->
 
-Framework for building modular Monte Carlo risk analysis models. It extends the capabilities of `mc2d` to facilitate working with multiple risk pathways, variates and scenarios. It provides tools to organize risk analysis in independent flexible modules, perform multivariate mcnode operations, automate the creation of mcnodes and visualise risk analysis models.
+Framework for building modular Monte Carlo risk analysis models. It extends the capabilities of `mc2d` to facilitate working with multiple risk pathways, variates and scenarios. It provides tools to organize risk analysis in independent flexible modules, align multivariate mcnodes, automate the creation of mcnodes, visualise model structure, assess convergence, and perform sensitivity analysis.
 
 ## Installation
 
@@ -105,13 +105,23 @@ mc_network(example_mcmodule, legend = TRUE)
 
 ![](man/figures/mc_network_example.png)
 
-Further documentation and examples can be found in the [vignette](https://nataliaciria.com/mcmodule/articles/mcmodule.html) and in the [introduction](https://nataliaciria.com/mcmodule/articles/intro.html) article.
+6.  You can also perform model diagnosis, such as checking convergence and inputs-output uncertainty correlation analysis
+
+``` r
+# Convergence analysis
+exmaple_converg<-mcmodule_converg(example_mcmodule)
+
+# Correlation analysis
+exmaple_corr<-mcmodule_corr(example_mcmodule, output = "result_agg")
+```
+
+Further documentation and examples can be found in the [vignette](https://nataliaciria.com/mcmodule/articles/mcmodule.html).
 
 ## Citations
 
 If you use `mcmodule` in your research, please cite:
 
-Ciria, N. (2025). mcmodule: Modular Monte Carlo Risk Analysis. R package version 1.1.0. <https://nataliaciria.com/mcmodule/>
+Ciria N, Allepuz A, Ciaravino G (2026). mcmodule: Modular Monte Carlo Risk Analysis. R package version 1.3.0, <https://nataliaciria.com/mcmodule/>.
 
 ## Acknowledgements
 

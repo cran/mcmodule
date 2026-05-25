@@ -12,7 +12,7 @@ mc_filter(
   mcnode = NULL,
   name = NULL,
   prefix = NULL,
-  filter_suffix = "filtered",
+  suffix = "filtered",
   summary = TRUE
 )
 }
@@ -30,13 +30,13 @@ of the data associated with the mcnode.}
 \item{mcnode}{(mcnode object, optional). mcnode to filter directly. Default: NULL.}
 
 \item{name}{(character, optional). Name for the new filtered node when adding to
-mcmodule. If NULL, auto-generated from \code{mc_name} and \code{filter_suffix}.
+mcmodule. If NULL, auto-generated from \code{mc_name} and \code{suffix}.
 Default: NULL.}
 
 \item{prefix}{(character, optional). Prefix for the auto-generated node name.
 Default: NULL.}
 
-\item{filter_suffix}{(character). Suffix appended to auto-generated name.
+\item{suffix}{(character). Suffix appended to auto-generated name.
 Default: "filtered".}
 
 \item{summary}{(logical). If TRUE, compute summary statistics for the new node.
@@ -57,7 +57,7 @@ Either:
 }
 \description{
 Filters variates (data rows) from an mcnode based on logical conditions,
-similar to \code{dplyr::filter()}. Can return a new node in the mcmodule or
+similar to \code{\link[dplyr:filter]{dplyr::filter()}}. Can return a new node in the mcmodule or
 return a filtered mcnode directly.
 }
 \details{
@@ -69,6 +69,11 @@ Call signatures:
 
 Filter conditions work on variates (data rows); only rows meeting all conditions
 are retained in the resulting mcnode.
+
+For derived nodes with pre-computed summaries (types \code{"filter"}, \code{"compare"},
+or \code{"agg_total"}), filtering uses the node's \code{summary} by default as the data
+source (instead of \code{mcmodule$data[[data_name]]}) so variate alignment is
+preserved.
 }
 \examples{
 # Filter within an mcmodule and create new node

@@ -10,11 +10,13 @@ mcmodule_corr(
   by_exp = FALSE,
   match_variates = TRUE,
   variates_as_nsv = FALSE,
+  mc_names = NULL,
   print_summary = TRUE,
   progress = FALSE,
   method = c("spearman", "kendall", "pearson"),
   use = "all.obs",
-  lim = c(0.025, 0.975)
+  lim = c(0.025, 0.975),
+  plot = FALSE
 )
 }
 \arguments{
@@ -31,8 +33,11 @@ if FALSE, use global output (last node). Default: FALSE.}
 when data dimensions differ. Default: TRUE.}
 
 \item{variates_as_nsv}{(logical). If TRUE, combine all variates into one \code{mc}
-object; if FALSE, analyse each variate separately. See \code{mcmodule_to_mc()}.
+object; if FALSE, analyse each variate separately. See \code{\link[=mcmodule_to_mc]{mcmodule_to_mc()}}.
 Default: FALSE.}
+
+\item{mc_names}{(character vector, optional). Node names to include in analysis.
+If NULL (default), includes all nodes in the module. Default: NULL.}
 
 \item{print_summary}{(logical). If TRUE, print correlation analysis summary.
 Default: TRUE.}
@@ -41,14 +46,17 @@ Default: TRUE.}
 Default: FALSE.}
 
 \item{method}{(character). Correlation coefficient type: "spearman" (default),
-"kendall", or "pearson". See \code{stats::cor()}. Default: "spearman".}
+"kendall", or "pearson". See \code{\link[stats:cor]{stats::cor()}}. Default: "spearman".}
 
 \item{use}{(character). Method for handling missing values: "all.obs",
-"complete.obs", or "pairwise.complete.obs". See \code{stats::cor()}.
+"complete.obs", or "pairwise.complete.obs". See \code{\link[stats:cor]{stats::cor()}}.
 Default: "all.obs".}
 
 \item{lim}{(numeric vector). Quantiles for credible interval computation (reserved
 for two-dimensional models). Default: \code{c(0.025, 0.975)}.}
+
+\item{plot}{(logical). If TRUE, plots a tornado plot generated from the
+computed correlation table using \code{\link[=mcmodule_tornado]{mcmodule_tornado()}}. Default: FALSE.}
 }
 \value{
 A data frame with correlation coefficients and metadata. Columns include:
@@ -56,10 +64,10 @@ A data frame with correlation coefficients and metadata. Columns include:
 \item exp: Expression name
 \item exp_n: Expression number
 \item variate: Variate number
-\item output: Output node name
+\item output: Output node names
 \item input: Input node name
 \item value: Correlation coefficient value
-\item strength: Qualitative strength of association (Very strong, Strong, Moderate, Weak, None)
+\item strength: Qualitative strength of association (Very strong, Strong, Moderate, Weak, Very weak/None)
 \item method: Correlation method used (spearman, kendall, or pearson)
 \item use: Method for handling missing values (passed to the correlation function)
 \item warnings: Any warnings generated during correlation calculation (if present)
@@ -68,6 +76,7 @@ A data frame with correlation coefficients and metadata. Columns include:
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Computes correlation coefficients between mcmodule inputs and outputs using
 tornado analysis (from the \code{mc2d} package). Supports multiple correlation methods
 and captures warnings generated during calculation.
@@ -75,7 +84,7 @@ and captures warnings generated during calculation.
 \examples{
 mcmodule <- agg_totals(
   mcmodule = imports_mcmodule,
-  mc_name = "no_detect_a",
+  mc_name = "no_detect",
   agg_keys = "pathogen"
 )
 cor_results <- mcmodule_corr(mcmodule)

@@ -5,10 +5,10 @@
 #' - Within-herd prevalence (`w_prev`)
 #' - Test sensitivity (`test_sensi`)
 #' - Test origin probability (`test_origin`)
-#' - Infection probability (`inf_a`)
-#' - False negative probability (`false_neg_a`)
-#' - No test probability (`no_test_a`)
-#' - Non-detection probability (`no_detect_a`)
+#' - Infection probability (`infected`)
+#' - False negative probability (`false_neg`)
+#' - No test probability (`no_test`)
+#' - Non-detection probability (`no_detect`)
 #'
 #' @format An mcmodule object with the following components:
 #' \describe{

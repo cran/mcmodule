@@ -20,7 +20,7 @@
 #' @details
 #' A raw module has a single expression in `mcmodule$exp`.
 #' A combined module has multiple expressions in `mcmodule$exp`, each
-#' representing a component module that was combined via `combine_modules()`.
+#' representing a component module that was combined via [combine_modules()].
 #'
 #' For combined modules, module names are recursively extracted up to one level deep.
 #' This allows identifying all base modules even in deeply nested combinations.
@@ -51,99 +51,65 @@ mcmodule_info <- function(mcmodule) {
     stop("mcmodule does not contain an 'exp' element")
   }
 
-  # Function to recursively extract module names up to one level
-  extract_module_names <- function(exp_list, level = 0) {
-    if (level > 1) {
-      return(character(0))
+  # Fully recursive extractor for module names
+  extract_module_names <- function(exp_list) {
+    out <- character(0)
+
+    if (!is.list(exp_list) || length(exp_list) == 0) {
+      return(out)
     }
 
-    names_list <- names(exp_list)
-
-    module_names <- lapply(seq_along(exp_list), function(i) {
+    for (i in seq_along(exp_list)) {
       elem <- exp_list[[i]]
-      elem_name <- names_list[i]
+      elem_name <- names(exp_list)[i]
 
       if (is.list(elem) && !is.expression(elem) && !is.language(elem)) {
-        child_is_list <- vapply(
+        # If this child contains expressions (leaf module), record its name
+        child_is_expr <- any(vapply(
           elem,
-          function(x) is.list(x) && !is.expression(x) && !is.language(x),
+          function(x) is.expression(x) || is.language(x),
           logical(1)
-        )
-
-        if (any(child_is_list) && level < 1L) {
-          nested_names <- extract_module_names(elem, level = level + 1L)
-
-          if (length(nested_names) > 0) {
-            return(nested_names)
-          }
+        ))
+        if (child_is_expr) {
+          out <- c(out, elem_name)
         }
 
-        return(elem_name)
+        # Recurse to find deeper modules
+        out <- c(out, extract_module_names(elem))
       }
+    }
 
-      elem_name
-    })
-
-    unlist(module_names)
+    unique(out)
   }
 
-  # Function to extract all expressions with their module names
-  extract_module_exp <- function(exp_list, parent_module = NULL, level = 0) {
-    if (level > 1) {
-      return(data.frame(
-        module = character(0),
-        exp = character(0),
-        stringsAsFactors = FALSE
-      ))
+  # Fully recursive extractor for expressions and their module names
+  extract_module_exp <- function(exp_list, parent_module = NULL) {
+    out <- list()
+
+    if (!is.list(exp_list) || length(exp_list) == 0) {
+      return(dplyr::bind_rows(out))
     }
 
-    names_list <- names(exp_list)
-
-    result_list <- lapply(seq_along(exp_list), function(i) {
+    for (i in seq_along(exp_list)) {
       elem <- exp_list[[i]]
-      elem_name <- names_list[i]
+      elem_name <- names(exp_list)[i]
 
       if (is.list(elem) && !is.expression(elem) && !is.language(elem)) {
-        # Check if children are lists (nested modules)
-        child_is_list <- vapply(
-          elem,
-          function(x) is.list(x) && !is.expression(x) && !is.language(x),
-          logical(1)
-        )
-
-        if (any(child_is_list) && level < 1L) {
-          # Recurse into nested modules
-          extract_module_exp(
-            elem,
-            parent_module = elem_name,
-            level = level + 1L
-          )
-        } else {
-          # This is a module with expressions
-          exp_names <- names(elem)
-          data.frame(
-            module = rep(elem_name, length(elem)),
-            exp = exp_names,
-            stringsAsFactors = FALSE
-          )
+        # Recurse into nested lists to find expressions; parent_module is the module name
+        nested <- extract_module_exp(elem, parent_module = elem_name)
+        if (nrow(nested) > 0) {
+          out[[length(out) + 1]] <- nested
         }
       } else if (is.expression(elem) || is.language(elem)) {
-        # This is an expression
-        data.frame(
+        out[[length(out) + 1]] <- data.frame(
           module = if (!is.null(parent_module)) parent_module else elem_name,
           exp = elem_name,
           stringsAsFactors = FALSE
         )
-      } else {
-        data.frame(
-          module = character(0),
-          exp = character(0),
-          stringsAsFactors = FALSE
-        )
       }
-    })
+    }
 
-    dplyr::bind_rows(result_list)
+    dplyr::bind_rows(out)
   }
 
   # Combined modules have nested lists in exp
@@ -153,23 +119,29 @@ mcmodule_info <- function(mcmodule) {
     logical(1)
   ))
 
-  if (has_nested) {
-    module_names <- extract_module_names(mcmodule$exp)
-    n_modules <- length(module_names)
-    is_combined <- n_modules > 1
-    module_exp <- extract_module_exp(mcmodule$exp)
-  } else {
+  # Handle raw modules (top-level expressions) separately to preserve module name
+  top_level_is_expr <- all(vapply(
+    mcmodule$exp,
+    function(x) is.expression(x) || is.language(x),
+    logical(1)
+  ))
+
+  if (top_level_is_expr) {
     module_names <- deparse(substitute(mcmodule))
     n_modules <- 1L
     is_combined <- FALSE
-
-    # For raw modules, extract expressions directly
     exp_names <- names(mcmodule$exp)
     module_exp <- data.frame(
       module = rep(module_names, length(exp_names)),
       exp = exp_names,
       stringsAsFactors = FALSE
     )
+  } else {
+    # Extract module/expressions recursively for combined modules
+    module_exp <- extract_module_exp(mcmodule$exp)
+    module_names <- unique(module_exp$module)
+    n_modules <- length(module_names)
+    is_combined <- n_modules > 1
   }
 
   # Extract module expressions and metadata (index information)
@@ -191,6 +163,49 @@ mcmodule_info <- function(mcmodule) {
   # Create a data frame to store module, expression and data_name
   module_exp$data_name <- data_name[module_exp$exp]
 
+  # Compute node counts per module and prev mcmodule traceability
+  if (!is.null(mcmodule$node_list) && length(mcmodule$node_list) > 0) {
+    node_df <- data.frame(
+      name = names(mcmodule$node_list),
+      exp = vapply(
+        mcmodule$node_list,
+        function(x) x[["exp_name"]] %||% NA_character_,
+        character(1)
+      ),
+      type = vapply(
+        mcmodule$node_list,
+        function(x) x[["type"]] %||% NA_character_,
+        character(1)
+      ),
+      stringsAsFactors = FALSE
+    )
+
+    node_df$module <- module_exp$module[match(node_df$exp, module_exp$exp)]
+
+    # Replace NA modules with a fallback (raw module name)
+    node_df$module[is.na(node_df$module)] <- deparse(substitute(mcmodule))
+
+    # Pivot counts by module and type
+    agg <- stats::aggregate(name ~ module, data = node_df, FUN = length)
+    names(agg)[names(agg) == "name"] <- "n_nodes"
+
+    types <- unique(node_df$type)
+
+    # Build node_counts data.frame
+    node_counts <- agg
+    for (t in types) {
+      counts <- as.integer(vapply(
+        node_counts$module,
+        function(m) sum(node_df$type[node_df$module == m] == t, na.rm = TRUE),
+        integer(1)
+      ))
+      col_name <- paste0("n_", gsub("[^[:alnum:]]+", "_", t))
+      node_counts[[col_name]] <- counts
+    }
+  } else {
+    node_counts <- NULL
+  }
+
   # Process global keys
   global_keys <- unique(unlist(lapply(names(mcmodule$node_list), function(x) {
     mcmodule$node_list[[x]][["keys"]]
@@ -198,11 +213,41 @@ mcmodule_info <- function(mcmodule) {
 
   # Process data keys
   data_keys <- data.frame()
-  for (i in unique(data_name)[unique(data_name) %in% names(mcmodule$data)]) {
-    data_i <- mcmodule$data[[i]][names(mcmodule$data[[i]]) %in% global_keys]
-    data_i$variate <- seq_len(nrow(data_i))
-    data_i$data_name <- i
-    data_keys <- dplyr::bind_rows(data_keys, data_i)
+
+  # Only warn about missing data if nodes are NOT from the sample design.
+  has_sample_design_nodes <- any(vapply(
+    mcmodule$node_list,
+    function(x) isTRUE(x[["from_sample_design"]]),
+    logical(1)
+  ))
+
+  empty_data <- length(mcmodule$data) == 0 ||
+    all(vapply(
+      mcmodule$data,
+      function(df) {
+        if (is.data.frame(df)) {
+          nrow(df) == 0L
+        } else {
+          TRUE
+        }
+      },
+      logical(1)
+    ))
+
+  if (empty_data) {
+    if (!has_sample_design_nodes) {
+      warning(
+        "No data frames found in mcmodule$data for any expressions in mcmodule$node_list"
+      )
+    }
+    data_keys <- NULL
+  } else {
+    for (i in unique(data_name)[unique(data_name) %in% names(mcmodule$data)]) {
+      data_i <- mcmodule$data[[i]][names(mcmodule$data[[i]]) %in% global_keys]
+      data_i$variate <- seq_len(nrow(data_i))
+      data_i$data_name <- i
+      data_keys <- dplyr::bind_rows(data_keys, data_i)
+    }
   }
 
   list(
@@ -211,6 +256,9 @@ mcmodule_info <- function(mcmodule) {
     module_names = module_names,
     module_exp_data = module_exp,
     data_keys = data_keys,
-    global_keys = global_keys
-  )
+    global_keys = global_keys,
+    node_counts = node_counts
+  ) -> out_list
+
+  out_list
 }

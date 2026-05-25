@@ -20,6 +20,11 @@
 #' 1. By providing an mcmodule and mc_name
 #' 2. By providing data and mcnode directly
 #'
+#' For filtered nodes (type = "filter"), compared nodes (type = "compare"), and
+#' aggregated nodes (type = "agg_total"), this function returns the pre-calculated
+#' summary statistics that were computed when the node was created, rather than
+#' recalculating from the original data.
+#'
 #' @return A data frame with summary statistics for each mcnode variate.
 #'   Columns include:
 #'   \itemize{
@@ -75,6 +80,16 @@ mc_summary <- function(
 
     if (is.null(mcnode)) {
       mcnode <- mcmodule$node_list[[mc_name]]$mcnode
+    }
+
+    # Check if node has a pre-calculated summary (for filtered, compared, or aggregated nodes)
+    node_type <- mcmodule$node_list[[mc_name]]$type
+    if (
+      !is.null(node_type) &&
+        node_type %in% c("filter", "compare", "agg_total") &&
+        !is.null(mcmodule$node_list[[mc_name]]$summary)
+    ) {
+      return(mcmodule$node_list[[mc_name]]$summary)
     }
 
     data_name <- mcmodule$node_list[[mc_name]]$data_name

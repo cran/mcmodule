@@ -11,8 +11,26 @@
 #'   Default: NULL.
 #'
 #' @return Current or newly set mctable. Columns include: mcnode (required),
-#'   description, mc_func, from_variable, transformation, sensi_baseline,
+#'   description, mc_func, from_variable, sample_space, transformation,
 #'   sensi_variation.
+#'
+#' @details
+#' mctable columns are interpreted as follows:
+#' \itemize{
+#'   \item `mcnode`: Name of the Monte Carlo node (required).
+#'   \item `description`: Human-readable description of the node.
+#'   \item `mc_func`: Distribution function used to create stochastic nodes
+#'     (for example `runif`, `rpert`). If missing/`NA`, node is deterministic.
+#'   \item `from_variable`: Source column name in `data` when different from
+#'     `mcnode`.
+#'   \item `sample_space`: Sampling definition used by [mctable_bounds()] and [mctable_sobol_matrices()].
+#'     Supported formats include `c(...)` and named bounds such as
+#'     `min = X, max = Y`.
+#'   \item `transformation`: R expression applied using `value` as placeholder
+#'     before node creation.
+#'   \item `sensi_variation`: OAT variation expression using `value` placeholder
+#'     in [eval_module()].
+#' }
 #'
 #' @examples
 #' # Get current MC table
@@ -37,8 +55,8 @@ set_mctable <- function(data = NULL) {
         description = character(),
         mc_func = character(),
         from_variable = character(),
+        sample_space = character(),
         transformation = character(),
-        sensi_baseline = character(),
         sensi_variation = character()
       ),
       envir = .pkgglobalenv
@@ -74,8 +92,8 @@ reset_mctable <- function() {
     description = character(),
     mc_func = character(),
     from_variable = character(),
+    sample_space = character(),
     transformation = character(),
-    sensi_baseline = character(),
     sensi_variation = character()
   )
   assign("mctable", empty_mctable, envir = .pkgglobalenv)
@@ -91,12 +109,14 @@ reset_mctable <- function() {
 #' with `NA`.
 #'
 #' @param data (data frame). mctable with `mcnode` column (required) and optionally
-#'   `mc_func`, `description`, `from_variable`, `transformation`, `sensi_baseline`,
-#'   and `sensi_variation`. Default: required.
+#'   `mc_func`, `description`, `from_variable`, `sample_space`, `transformation`, and
+#'   `sensi_variation`. Default: required.
 #'
 #' @details
 #' If `mc_func` is missing, all nodes are treated as deterministic (no uncertainty).
-#' Optional columns are auto-filled with `NA` if absent.
+#' Optional columns are auto-filled with `NA` if absent. When `sample_space`
+#' values are provided, they must use supported formats (`c(...)` or named
+#' assignments such as `min = X, max = Y`).
 #'
 #' @return The validated `data` frame with all standard mctable columns present,
 #'   with missing optional columns filled as `NA`.
@@ -119,14 +139,32 @@ check_mctable <- function(data) {
       "mc_func",
       "description",
       "from_variable",
+      "sample_space",
       "transformation",
-      "sensi_baseline",
       "sensi_variation"
     )
 
     missing_cols <- cols[!cols %in% colnames(data)]
 
     data[missing_cols] <- NA
+
+    # Validate sample_space format when provided
+    sample_space_chr <- as.character(data$sample_space)
+    has_sample_space <- !is.na(sample_space_chr) &
+      nzchar(trimws(sample_space_chr))
+    if (any(has_sample_space)) {
+      valid_sample_space <-
+        grepl("^c\\s*\\(", trimws(sample_space_chr)) |
+        grepl("=", sample_space_chr)
+
+      invalid_rows <- which(has_sample_space & !valid_sample_space)
+      if (length(invalid_rows) > 0) {
+        stop(sprintf(
+          "Invalid sample_space format at row(s): %s. Use 'c(...)' or named assignments like 'min = X, max = Y'.",
+          paste(invalid_rows, collapse = ", ")
+        ))
+      }
+    }
 
     return(data)
   } else {

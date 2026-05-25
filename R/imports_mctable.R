@@ -11,7 +11,7 @@
 #'   \item{mc_func}{R function used for random number generation (e.g., runif, rnorm, rpert)}
 #'   \item{from_variable}{Dependency reference to other variables if applicable}
 #'   \item{transformation}{Mathematical transformations applied to the node values}
-#'   \item{sensi_baseline}{Parameters for baseline mock distribution without uncertainty}
+#'   \item{sample_space}{Allowed values for the input. Use min/max for numeric ranges (e.g., \code{min=0, max=1}) and explicit vectors for factors/logicals (e.g., \code{c("a", "b", "c")} or \code{c(TRUE, FALSE)})}
 #'   \item{sensi_variation}{OAT variation expression using 'value' placeholder}
 #' }
 #'

@@ -13,13 +13,31 @@ Default: NULL.}
 }
 \value{
 Current or newly set mctable. Columns include: mcnode (required),
-description, mc_func, from_variable, transformation, sensi_baseline,
+description, mc_func, from_variable, sample_space, transformation,
 sensi_variation.
 }
 \description{
 Manages the global mctable (Monte Carlo nodes reference table) by setting
 or retrieving its value. The table stores metadata about mcnodes including
 descriptions, functions, and sensitivity analysis parameters.
+}
+\details{
+mctable columns are interpreted as follows:
+\itemize{
+\item \code{mcnode}: Name of the Monte Carlo node (required).
+\item \code{description}: Human-readable description of the node.
+\item \code{mc_func}: Distribution function used to create stochastic nodes
+(for example \code{runif}, \code{rpert}). If missing/\code{NA}, node is deterministic.
+\item \code{from_variable}: Source column name in \code{data} when different from
+\code{mcnode}.
+\item \code{sample_space}: Sampling definition used by \code{\link[=mctable_bounds]{mctable_bounds()}} and \code{\link[=mctable_sobol_matrices]{mctable_sobol_matrices()}}.
+Supported formats include \code{c(...)} and named bounds such as
+\verb{min = X, max = Y}.
+\item \code{transformation}: R expression applied using \code{value} as placeholder
+before node creation.
+\item \code{sensi_variation}: OAT variation expression using \code{value} placeholder
+in \code{\link[=eval_module]{eval_module()}}.
+}
 }
 \examples{
 # Get current MC table

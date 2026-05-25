@@ -30,7 +30,7 @@ Extracts comprehensive metadata about a Monte Carlo module, including:
 \details{
 A raw module has a single expression in \code{mcmodule$exp}.
 A combined module has multiple expressions in \code{mcmodule$exp}, each
-representing a component module that was combined via \code{combine_modules()}.
+representing a component module that was combined via \code{\link[=combine_modules]{combine_modules()}}.
 
 For combined modules, module names are recursively extracted up to one level deep.
 This allows identifying all base modules even in deeply nested combinations.

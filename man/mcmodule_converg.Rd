@@ -9,8 +9,10 @@ mcmodule_converg(
   from_quantile = 0.95,
   to_quantile = 1,
   conv_threshold = NULL,
+  tiny_threshold = NULL,
   print_summary = TRUE,
-  progress = FALSE
+  progress = FALSE,
+  mc_names = NULL
 )
 }
 \arguments{
@@ -23,10 +25,15 @@ mcmodule_converg(
 \item{conv_threshold}{(numeric, optional). Custom convergence threshold for
 standardised differences. Default: NULL.}
 
+\item{tiny_threshold}{(numeric). Threshold for identifying negligible differences, even if they don't meet the convergence threshold. Default: 0.0001.}
+
 \item{print_summary}{(logical). If TRUE, print convergence analysis summary.
 Default: TRUE.}
 
 \item{progress}{(logical). If TRUE, print progress information. Default: FALSE.}
+
+\item{mc_names}{(character vector, optional). Node names to include in analysis.
+If NULL (default), includes all nodes in the module. Default: NULL.}
 }
 \value{
 A data frame with convergence statistics. Each row represents one node.
@@ -37,12 +44,12 @@ Key columns:
 \item node: Node name.
 \item max_dif_scaled: Maximum standardised difference.
 \item max_dif: Maximum raw difference.
-\item conv_threshold: Convergence at custom threshold, if provided.
 \item conv_01, conv_025, conv_05: Convergence at 1\%, 2.5\%, 5\% thresholds.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Analyses convergence in Monte Carlo simulations by computing standardised
 and raw differences between consecutive iterations to evaluate stability and
 convergence of statistical measures.

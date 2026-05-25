@@ -15,10 +15,14 @@ mc_keys(mcmodule, mc_name, keys_names = NULL)
 If NULL, uses all keys for the node. Default: NULL.}
 }
 \value{
-A data frame with scenario_id and requested key columns.
+A data frame with \code{scenario_id} and requested key columns.
 }
 \description{
 Extracts key columns from a mcnode's associated data.
+}
+\details{
+Sample-design nodes are treated as row-aligned inputs: they have no data
+name or key columns, and key extraction returns only \code{scenario_id}.
 }
 \examples{
 keys_df <- mc_keys(imports_mcmodule, "w_prev")

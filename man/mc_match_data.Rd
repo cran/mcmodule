@@ -4,7 +4,13 @@
 \alias{mc_match_data}
 \title{Match Monte Carlo Node with Data Frame}
 \usage{
-mc_match_data(mcmodule, mc_name, data, keys_names = NULL)
+mc_match_data(
+  mcmodule,
+  mc_name,
+  data,
+  keys_names = NULL,
+  match_scenario = TRUE
+)
 }
 \arguments{
 \item{mcmodule}{(mcmodule object). Module containing node.}
@@ -15,6 +21,10 @@ mc_match_data(mcmodule, mc_name, data, keys_names = NULL)
 
 \item{keys_names}{(character vector, optional). Column names for matching.
 Default: NULL.}
+
+\item{match_scenario}{(logical). If TRUE, scenario_id is used for alignment
+(default behavior). If FALSE, scenario_id is treated as a regular key,
+enabling cross-scenario matching. Default: TRUE.}
 }
 \value{
 A list containing matched mcnode, matched data, and combined keys
@@ -31,10 +41,12 @@ Matching proceeds in order:
 \item Scenario matching — same groups but different scenarios
 \item Null matching — add missing groups across different scenarios
 }
+
+Sample-design nodes behave as 1-variate that can be matched directly.
 }
 \examples{
 test_data  <- data.frame(pathogen=c("a","b"),
                          inf_dc_min=c(0.05,0.3),
                          inf_dc_max=c(0.08,0.4))
-result<-mc_match_data(imports_mcmodule,"no_detect_a", test_data)
+result<-mc_match_data(imports_mcmodule,"no_detect", test_data)
 }

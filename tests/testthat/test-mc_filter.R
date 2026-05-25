@@ -90,11 +90,65 @@ suppressMessages({
     # Check description contains both conditions
     expect_true(grepl(
       "category == \"A\"",
-      result$node_list$p_1_A_North_filtered$filter_conditions
+      result$node_list$p_1_A_North_filtered$filter
     ))
     expect_true(grepl(
       "region == \"North\"",
-      result$node_list$p_1_A_North_filtered$filter_conditions
+      result$node_list$p_1_A_North_filtered$filter
+    ))
+  })
+
+  test_that("mc_filter works with three or more conditions", {
+    test_module <- list(
+      node_list = list(
+        p_1 = list(
+          mcnode = mcstoc(
+            runif,
+            min = mcdata(c(0.1, 0.2, 0.3, 0.4), type = "0", nvariates = 4),
+            max = mcdata(c(0.2, 0.3, 0.4, 0.5), type = "0", nvariates = 4),
+            nvariates = 4
+          ),
+          data_name = "test_data",
+          keys = c("category", "region", "scenario_id")
+        )
+      ),
+      data = list(
+        test_data = data.frame(
+          category = c("A", "A", "A", "B"),
+          region = c("North", "East", "South", "West"),
+          scenario_id = c("0", "0", "0", "0")
+        )
+      )
+    )
+
+    result <- mc_filter(
+      test_module,
+      "p_1",
+      category == "A",
+      region %in% c("North", "East"),
+      scenario_id == "0",
+      name = "p_1_A_North_0"
+    )
+    expect_equal(dim(result$node_list$p_1_A_North_0_filtered$mcnode)[3], 2)
+    expect_true(grepl(
+      "category == \"A\"",
+      result$node_list$p_1_A_North_0_filtered$filter
+    ))
+    expect_true(grepl(
+      "region %in%",
+      result$node_list$p_1_A_North_0_filtered$filter
+    ))
+    expect_true(grepl(
+      "North",
+      result$node_list$p_1_A_North_0_filtered$filter
+    ))
+    expect_true(grepl(
+      "East",
+      result$node_list$p_1_A_North_0_filtered$filter
+    ))
+    expect_true(grepl(
+      "scenario_id == \"0\"",
+      result$node_list$p_1_A_North_0_filtered$filter
     ))
   })
 
@@ -153,22 +207,22 @@ suppressMessages({
     result1 <- mc_filter(test_module, "p_1", category == "A", name = "custom")
     expect_true("custom_filtered" %in% names(result1$node_list))
 
-    # Test with custom filter_suffix
+    # Test with custom suffix
     result2 <- mc_filter(
       test_module,
       "p_1",
       category == "A",
-      filter_suffix = "subset"
+      suffix = "subset"
     )
     expect_true("p_1_subset" %in% names(result2$node_list))
 
-    # Test with empty filter_suffix
+    # Test with empty suffix
     result3 <- mc_filter(
       test_module,
       "p_1",
       category == "A",
       name = "exact_name",
-      filter_suffix = ""
+      suffix = ""
     )
     expect_true("exact_name" %in% names(result3$node_list))
 
@@ -447,9 +501,12 @@ suppressMessages({
     expect_true(!is.null(result$node_list$filtered_A_filtered$description))
     expect_true(!is.null(result$node_list$filtered_A_filtered$node_expression))
     expect_true(
-      !is.null(result$node_list$filtered_A_filtered$filter_conditions)
+      !is.null(result$node_list$filtered_A_filtered$filter)
     )
     expect_equal(result$node_list$filtered_A_filtered$data_name, "test_data")
+
+    # Check that module name is correctly stored
+    expect_equal(result$node_list$filtered_A_filtered$module, "test_module")
   })
 
   test_that("mc_filter works with complex dplyr expressions", {

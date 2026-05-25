@@ -4,7 +4,13 @@
 \alias{mc_match}
 \title{Match Two Monte Carlo Nodes}
 \usage{
-mc_match(mcmodule, mc_name_x, mc_name_y, keys_names = NULL)
+mc_match(
+  mcmodule,
+  mc_name_x,
+  mc_name_y,
+  keys_names = NULL,
+  match_scenario = TRUE
+)
 }
 \arguments{
 \item{mcmodule}{(mcmodule object). Module containing nodes.}
@@ -15,6 +21,10 @@ mc_match(mcmodule, mc_name_x, mc_name_y, keys_names = NULL)
 
 \item{keys_names}{(character vector, optional). Column names for matching.
 Default: NULL.}
+
+\item{match_scenario}{(logical). If TRUE, scenario_id is used for alignment
+(default behavior). If FALSE, scenario_id is treated as a regular key,
+enabling cross-scenario matching. Default: TRUE.}
 }
 \value{
 A list containing matched nodes and combined keys (\code{keys_xy}).
@@ -30,6 +40,8 @@ Matching proceeds in order:
 \item Scenario matching — align nodes with same groups but different scenarios
 \item Null matching — add missing groups across different scenarios
 }
+
+Sample-design nodes behave as 1-variate that can be matched directly.
 }
 \examples{
 test_module <- list(

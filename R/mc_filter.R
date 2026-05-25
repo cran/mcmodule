@@ -1,7 +1,7 @@
 #' Filter mcnode Variates by Condition
 #'
 #' Filters variates (data rows) from an mcnode based on logical conditions,
-#' similar to `dplyr::filter()`. Can return a new node in the mcmodule or
+#' similar to [dplyr::filter()]. Can return a new node in the mcmodule or
 #' return a filtered mcnode directly.
 #'
 #' @param mcmodule (mcmodule object, optional). Module containing the node.
@@ -12,11 +12,11 @@
 #' @param data (data frame, optional). Input data frame. Default: NULL.
 #' @param mcnode (mcnode object, optional). mcnode to filter directly. Default: NULL.
 #' @param name (character, optional). Name for the new filtered node when adding to
-#'   mcmodule. If NULL, auto-generated from `mc_name` and `filter_suffix`.
+#'   mcmodule. If NULL, auto-generated from `mc_name` and `suffix`.
 #'   Default: NULL.
 #' @param prefix (character, optional). Prefix for the auto-generated node name.
 #'   Default: NULL.
-#' @param filter_suffix (character). Suffix appended to auto-generated name.
+#' @param suffix (character). Suffix appended to auto-generated name.
 #'   Default: "filtered".
 #' @param summary (logical). If TRUE, compute summary statistics for the new node.
 #'   Default: TRUE.
@@ -28,6 +28,11 @@
 #'
 #' Filter conditions work on variates (data rows); only rows meeting all conditions
 #' are retained in the resulting mcnode.
+#'
+#' For derived nodes with pre-computed summaries (types `"filter"`, `"compare"`,
+#' or `"agg_total"`), filtering uses the node's `summary` by default as the data
+#' source (instead of `mcmodule$data[[data_name]]`) so variate alignment is
+#' preserved.
 #'
 #' @return Either:
 #'   - Updated mcmodule with new filtered node (when mcmodule and `name` provided).
@@ -71,12 +76,19 @@ mc_filter <- function(
   mcnode = NULL,
   name = NULL,
   prefix = NULL,
-  filter_suffix = "filtered",
+  suffix = "filtered",
   summary = TRUE
 ) {
   eval_env <- parent.frame()
   mcmodule_expr <- substitute(mcmodule)
   filter_expr <- as.list(substitute(list(...)))[-1]
+
+  # Capture module name before evaluation to avoid deparsing entire object
+  module_name <- if (is.symbol(mcmodule_expr)) {
+    as.character(mcmodule_expr)
+  } else {
+    deparse(mcmodule_expr)
+  }
 
   if (length(filter_expr) == 0 && is.call(mcmodule_expr) && is.null(mc_name)) {
     filter_expr <- list(mcmodule_expr)
@@ -97,7 +109,6 @@ mc_filter <- function(
   return_mcmodule <- FALSE
 
   if (!is.null(mcmodule)) {
-    module_name <- deparse(substitute(mcmodule))
     return_mcmodule <- TRUE
 
     if (is.null(mcnode)) {
@@ -108,17 +119,33 @@ mc_filter <- function(
       stop(sprintf("%s must be a mcnode present in %s", mc_name, module_name))
     }
 
-    data_name <- mcmodule$node_list[[mc_name]]$data_name
+    node <- mcmodule$node_list[[mc_name]]
+    data_name <- node$data_name
+    node_type <- node$type
+    # For derived nodes (filter, compare, agg_total), use pre-computed summary as the data source
+    # to preserve variate-to-row correspondence
+    uses_summary_data <-
+      !is.null(node_type) &&
+      node_type %in% c("filter", "compare", "agg_total") &&
+      !is.null(node$summary)
 
+    # If data not provided, attempt to use node's data_name to get data from mcmodule$data
+    # If node_type is "total" and multiple data_names exist use summary
     if (is.null(data)) {
-      data <- mcmodule$data[[data_name]]
-    }
-
-    if (length(data_name) > 1) {
-      message(
-        "Multiple data names detected. Using first data_name for filtering."
-      )
-      data <- mcmodule$data[[data_name[1]]]
+      data <- if (uses_summary_data) {
+        node$summary
+      } else if (length(data_name) > 1 && !uses_summary_data) {
+        if (node_type == "total") {
+          node$summary
+        } else {
+          message(
+            "Multiple data names detected. Using first data_name for filtering."
+          )
+          data <- mcmodule$data[[data_name[1]]]
+        }
+      } else {
+        mcmodule$data[[data_name]]
+      }
     }
   } else {
     if (is.null(data)) {
@@ -187,14 +214,14 @@ mc_filter <- function(
 
   # Generate name for filtered node
   filtered_mc_name <- if (!is.null(name)) {
-    if (!is.null(filter_suffix) && filter_suffix != "") {
-      paste0(name, "_", filter_suffix)
+    if (!is.null(suffix) && suffix != "") {
+      paste0(name, "_", suffix)
     } else {
       name
     }
   } else {
-    if (!is.null(filter_suffix) && filter_suffix != "") {
-      paste0(mc_name, "_", filter_suffix)
+    if (!is.null(suffix) && suffix != "") {
+      paste0(mc_name, "_", suffix)
     } else {
       paste0(mc_name, "_flt")
     }
@@ -248,7 +275,7 @@ mc_filter <- function(
       NULL
     },
     prefix = if (!is.null(prefix)) prefix else NULL,
-    filter_conditions = filter_description
+    filter = filter_description
   )
 
   # Add summary if requested
@@ -256,12 +283,22 @@ mc_filter <- function(
     if (nrow(data_filtered) == 0) {
       mcmodule$node_list[[filtered_mc_name]][["summary"]] <- NULL
     } else {
+      # Include scenario_id in summary if it exists in the data
+      summary_keys <- keys_names
+      if (
+        "scenario_id" %in%
+          names(data_filtered) &&
+          !("scenario_id" %in% keys_names)
+      ) {
+        summary_keys <- c("scenario_id", keys_names)
+      }
+
       mcmodule$node_list[[filtered_mc_name]][["summary"]] <-
         mc_summary(
           mcmodule = mcmodule,
           data = data_filtered,
           mc_name = filtered_mc_name,
-          keys_names = keys_names
+          keys_names = summary_keys
         )
     }
   }

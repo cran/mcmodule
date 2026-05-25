@@ -312,6 +312,18 @@ imports_wif <- imports_wif %>%
 imports_wif$node_list$no_detect_set_agg$summary
 
 ## -----------------------------------------------------------------------------
+imports_wif <- mc_compare(
+  mcmodule = imports_wif,
+  mc_name = "no_detect_set_agg",
+  baseline = "0",
+  type = "relative_reduction",
+  name = "no_detect_set_rrr"
+)
+
+# Relative risk reduction by pathogen and scenario
+imports_wif$node_list$no_detect_set_rrr_compared$summary
+
+## -----------------------------------------------------------------------------
 #  Create pathogen data table
 transmission_data <- data.frame(
   pathogen = c("a", "b"),
@@ -390,6 +402,40 @@ info$global_keys
 #   from_quantile = 0.90,
 #   conv_threshold = 0.01
 # )
+
+## -----------------------------------------------------------------------------
+library(sensobol)
+
+# Generate Sobol sampling matrices from mctable
+N <- 1000  # Number of base samples
+X <- mctable_sobol_matrices(imports_mctable, N = N)
+
+# Evaluate the module with the Sobol sample design
+imports_sobol <- eval_module(
+  exp = c(imports = imports_exp),
+  data = NULL,
+  sample_design = X,
+  mctable = imports_mctable
+)
+
+# Calculate the target output
+imports_sobol <- trial_totals(
+  mcmodule = imports_sobol,
+  mc_names = c("no_detect"),
+  trials_n = "animals_n",
+  subsets_n = "farms_n",
+  subsets_p = "h_prev",
+  sample_design = X,
+  mctable = imports_mctable
+)
+
+# Extract output and compute Sobol indices
+y <- unmc(imports_sobol$node_list$no_detect_set_n$mcnode)
+sobol_sa <- sensobol::sobol_indices(Y = y, N = N, params = colnames(X))
+
+# View and plot results
+print(sobol_sa)
+plot(sobol_sa)
 
 ## -----------------------------------------------------------------------------
 sample_mcnode <- mcstoc(runif,

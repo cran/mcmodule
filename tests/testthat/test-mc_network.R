@@ -166,10 +166,207 @@ suppressMessages({
 
     combined_module <- at_least_one(
       combined_module,
-      c("no_detect_a", "imported_contaminated"),
+      c("no_detect", "imported_contaminated"),
       name = "total"
     )
 
     expect_no_error(mc_network(combined_module))
+  })
+
+  test_that("mc_network works with mc_filter nodes", {
+    # Create test module
+    test_module <- list(
+      node_list = list(
+        p1 = list(
+          mcnode = mcstoc(
+            runif,
+            min = mcdata(c(0.1, 0.2, 0.3, 0.4), type = "0", nvariates = 4),
+            max = mcdata(c(0.2, 0.3, 0.4, 0.5), type = "0", nvariates = 4),
+            nvariates = 4
+          ),
+          data_name = "test_data",
+          keys = c("category", "region"),
+          inputs = NULL
+        )
+      ),
+      data = list(
+        test_data = data.frame(
+          category = c("A", "B", "A", "B"),
+          region = c("North", "North", "South", "South"),
+          scenario_id = c("0", "0", "0", "0")
+        )
+      )
+    )
+
+    # Create filtered node
+    filtered_module <- mc_filter(
+      test_module,
+      "p1",
+      category == "A",
+      name = "p1_A"
+    )
+
+    # Test that mc_network works with filtered nodes
+    expect_no_error(mc_network(filtered_module))
+
+    # Get the network
+    network <- mc_network(filtered_module)
+    expect_true(all(c("visNetwork", "htmlwidget") %in% class(network)))
+
+    # Check that both original and filtered nodes are in the network
+    node_names <- network$x$nodes$id
+    expect_true("p1" %in% node_names)
+    expect_true("p1_A_filtered" %in% node_names)
+
+    # Verify edge from p1 to p1_A_filtered exists
+    edges <- network$x$edges
+    edge_pairs <- paste0(edges$from, "->", edges$to)
+    expect_true(any(grepl("p1.*p1_A_filtered", edge_pairs)))
+
+    # Verify the filtered node has the correct color
+    node_colors <- network$x$nodes$color
+    names(node_colors) <- network$x$nodes$id
+    expect_equal(unname(node_colors["p1_A_filtered"]), "#E8A5E5")
+  })
+
+  test_that("mc_network works with mc_compare nodes", {
+    # Create test module with comparison
+    test_module <- list(
+      node_list = list(
+        p1 = list(
+          mcnode = mcstoc(
+            runif,
+            min = mcdata(c(0.1, 0.2, 0.1, 0.2), type = "0", nvariates = 4),
+            max = mcdata(c(0.2, 0.3, 0.2, 0.3), type = "0", nvariates = 4),
+            nvariates = 4
+          ),
+          data_name = "test_data",
+          keys = c("category"),
+          inputs = NULL
+        )
+      ),
+      data = list(
+        test_data = data.frame(
+          category = c("A", "B", "A", "B"),
+          scenario_id = c("0", "0", "1", "1")
+        )
+      )
+    )
+
+    # Create comparison node
+    compared_module <- mc_compare(
+      test_module,
+      "p1",
+      baseline = "0",
+      type = "difference",
+      name = "p1_diff"
+    )
+
+    # Test that mc_network works with compared nodes
+    expect_no_error(mc_network(compared_module))
+
+    # Get the network
+    network <- mc_network(compared_module)
+    expect_true(all(c("visNetwork", "htmlwidget") %in% class(network)))
+
+    # Check that both original and compared nodes are in the network
+    node_names <- network$x$nodes$id
+    expect_true("p1" %in% node_names)
+    expect_true("p1_diff_compared" %in% node_names)
+
+    # Verify the node type for the comparison node
+    node_types <- network$x$nodes$type
+    names(node_types) <- network$x$nodes$id
+    expect_true(
+      node_types["p1_diff_compared"] == "compare" ||
+        !is.na(node_types["p1_diff_compared"])
+    )
+
+    # Verify the compared node has the correct color
+    node_colors <- network$x$nodes$color
+    names(node_colors) <- network$x$nodes$id
+    expect_equal(unname(node_colors["p1_diff_compared"]), "#D88FD5")
+  })
+
+  test_that("mc_network works with chained filter and compare nodes", {
+    # Create test module
+    test_module <- list(
+      node_list = list(
+        p1 = list(
+          mcnode = mcstoc(
+            runif,
+            min = mcdata(
+              c(0.1, 0.2, 0.3, 0.4, 0.1, 0.2, 0.3, 0.4),
+              type = "0",
+              nvariates = 8
+            ),
+            max = mcdata(
+              c(0.2, 0.3, 0.4, 0.5, 0.2, 0.3, 0.4, 0.5),
+              type = "0",
+              nvariates = 8
+            ),
+            nvariates = 8
+          ),
+          data_name = "test_data",
+          keys = c("category", "region"),
+          inputs = NULL
+        )
+      ),
+      data = list(
+        test_data = data.frame(
+          category = c("A", "B", "A", "B", "A", "B", "A", "B"),
+          region = c(
+            "North",
+            "North",
+            "North",
+            "North",
+            "South",
+            "South",
+            "South",
+            "South"
+          ),
+          scenario_id = c("0", "0", "1", "1", "0", "0", "1", "1")
+        )
+      )
+    )
+
+    # Create filtered node (region == "North")
+    filtered_module <- mc_filter(
+      test_module,
+      "p1",
+      region == "North",
+      name = "p1_north"
+    )
+
+    # Create comparison node from filtered node
+    compared_module <- mc_compare(
+      filtered_module,
+      "p1_north_filtered",
+      baseline = "0",
+      type = "difference",
+      name = "p1_north_diff"
+    )
+
+    # Test that mc_network works with chained nodes
+    expect_no_error(mc_network(compared_module))
+
+    # Get the network
+    network <- mc_network(compared_module)
+    expect_true(all(c("visNetwork", "htmlwidget") %in% class(network)))
+
+    # Check that all three nodes are in the network
+    node_names <- network$x$nodes$id
+    expect_true("p1" %in% node_names)
+    expect_true("p1_north_filtered" %in% node_names)
+    expect_true("p1_north_diff_compared" %in% node_names)
+
+    # Verify edges show the dependency chain
+    edges <- network$x$edges
+    edge_pairs <- paste0(edges$from, "->", edges$to)
+    expect_true(any(grepl("p1.*p1_north_filtered", edge_pairs)))
+    expect_true(any(grepl(
+      "p1_north_filtered.*p1_north_diff_compared",
+      edge_pairs
+    )))
   })
 })

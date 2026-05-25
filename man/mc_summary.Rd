@@ -55,6 +55,11 @@ This function can be called in two ways:
 \item By providing an mcmodule and mc_name
 \item By providing data and mcnode directly
 }
+
+For filtered nodes (type = "filter"), compared nodes (type = "compare"), and
+aggregated nodes (type = "agg_total"), this function returns the pre-calculated
+summary statistics that were computed when the node was created, rather than
+recalculating from the original data.
 }
 \examples{
 # Use with mcmodule

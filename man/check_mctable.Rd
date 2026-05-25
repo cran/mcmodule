@@ -8,8 +8,8 @@ check_mctable(data)
 }
 \arguments{
 \item{data}{(data frame). mctable with \code{mcnode} column (required) and optionally
-\code{mc_func}, \code{description}, \code{from_variable}, \code{transformation}, \code{sensi_baseline},
-and \code{sensi_variation}. Default: required.}
+\code{mc_func}, \code{description}, \code{from_variable}, \code{sample_space}, \code{transformation}, and
+\code{sensi_variation}. Default: required.}
 }
 \value{
 The validated \code{data} frame with all standard mctable columns present,
@@ -22,5 +22,7 @@ with \code{NA}.
 }
 \details{
 If \code{mc_func} is missing, all nodes are treated as deterministic (no uncertainty).
-Optional columns are auto-filled with \code{NA} if absent.
+Optional columns are auto-filled with \code{NA} if absent. When \code{sample_space}
+values are provided, they must use supported formats (\code{c(...)} or named
+assignments such as \verb{min = X, max = Y}).
 }

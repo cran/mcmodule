@@ -26,10 +26,10 @@ from different origins, including:
 \item Within-herd prevalence (\code{w_prev})
 \item Test sensitivity (\code{test_sensi})
 \item Test origin probability (\code{test_origin})
-\item Infection probability (\code{inf_a})
-\item False negative probability (\code{false_neg_a})
-\item No test probability (\code{no_test_a})
-\item Non-detection probability (\code{no_detect_a})
+\item Infection probability (\code{infected})
+\item False negative probability (\code{false_neg})
+\item No test probability (\code{no_test})
+\item Non-detection probability (\code{no_detect})
 }
 }
 \keyword{datasets}

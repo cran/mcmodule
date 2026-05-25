@@ -1,3 +1,55 @@
+# mcmodule 1.3.0
+
+### New features
+
+* Added support for sensitivity-analysis workflows based on sampling designs 
+  (Morris and Sobol), including new helpers `mctable_bounds()` and `mctable_sobol_matrices()` (#49).
+
+* `eval_module()` now supports creating modules using a sampling design (#49).
+
+* Added `set_sampling_design()` to register a sampling design for use across 
+  the workflow (#49).
+
+* Other package functions (`mc_keys()`, `mc_match()`, `mc_match_data()`, 
+  `trial_totals()`) adapted to handle nodes created from sampling designs (#49).
+
+* Added a tornado plot for correlation analysis via `mcmodule_tornado()` (#49).
+
+* Added `mcnode_null_rm()` to replace absent nodes by an specific value (similar to 
+  `mcnode_na_rm()`) (#66).
+
+* Added a experimental function to optimize the number of iterations needed for uncertainty 
+  convergence `optim_ndvar()` (#82).
+
+* Improved convergence diagnostics in `mcmodule_converg()`, including clearer 
+  summaries and reporting of non-converged nodes (#49).
+
+* Improved  `mcmodule_info()`, now returns the number of nodes by type and handles 
+  more complex module–expression combinations (#70).
+
+### Bug fixes
+
+* Fixed a bug in `mc_compare()` when comparing a total mcnode with multiple 
+  `data_names` (#71).
+
+* Fixed an `add_prefix()` bug where totals node names were not correctly 
+  prefixed (#68).
+
+* Fixed a bug in `eval_module()` when `package::function()` nomenclature was used 
+  within expressions (#32).
+
+* Renamed `filter_suffix` to `suffix` (#77).
+
+### Documentation
+
+* Expanded the main package vignette, including sensitivity analysis examples (#49, #70).
+
+* Added  sensitivity analysis vignette (#49, #70).
+
+* Expanded `mc_compare()` documentation with `align_uncertainty` explanation (#65).
+
+* Updated the package citation and README details (#57, #69).
+
 # mcmodule 1.2.0
 
 ## Breaking changes

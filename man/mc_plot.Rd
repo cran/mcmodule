@@ -46,7 +46,7 @@ groups. If "median", groups ordered by median value. Default: NULL.}
 Default: NULL.}
 
 \item{filter}{(expression, optional). Unquoted expression to filter variates
-(e.g., \code{pathogen == "a"} or \code{origin == "nord"}). Passed to \code{tidy_mcnode()}.
+(e.g., \code{pathogen == "a"} or \code{origin == "nord"}). Passed to \code{\link[=tidy_mcnode]{tidy_mcnode()}}.
 Default: NULL.}
 
 \item{threshold}{(numeric, optional). Reference value for vertical dashed line.
@@ -70,6 +70,7 @@ A ggplot2 object for further customisation and display.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Creates a ggplot2 visualisation of Monte Carlo node data showing distributions
 as semi-transparent boxplots overlaid with scatter points representing individual
 uncertainty iterations.
@@ -92,7 +93,7 @@ mc_plot(imports_mcmodule, "w_prev",
 )
 
 # Plot with threshold and scale transformation
-mc_plot(imports_mcmodule, "no_detect_a",
+mc_plot(imports_mcmodule, "no_detect",
   threshold = 0.5,
   scale = "log10"
 )

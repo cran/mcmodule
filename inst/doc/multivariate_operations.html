@@ -364,9 +364,6 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<blockquote>
-<p><em>Work in progress!</em> 🏗</p>
-</blockquote>
 <div id="sec-element-wise-operations" class="section level1">
 <h1>Element-wise operations</h1>
 <p>Most operations in this model are element-wise, meaning each
@@ -564,25 +561,25 @@ generated in <code>trial_totals()</code> because it’s included in
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Single-level trial</span></span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>imports_mcmodule <span class="ot">&lt;-</span> <span class="fu">trial_totals</span>(</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="at">mcmodule =</span> imports_mcmodule,</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="st">&quot;no_detect_a&quot;</span>, <span class="co"># trial_p</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="st">&quot;no_detect&quot;</span>, <span class="co"># trial_p</span></span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">trials_n =</span> <span class="st">&quot;animals_n&quot;</span>,</span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">mctable =</span> imports_mctable</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>)</span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co"># Probability that at least one infected animal from an infected farm is not detected</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">mc_summary</span>(imports_mcmodule,<span class="st">&quot;no_detect_a_set&quot;</span>)[,<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">mc_summary</span>(imports_mcmodule,<span class="st">&quot;no_detect_set&quot;</span>)[,<span class="sc">-</span><span class="dv">1</span>]</span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt;   pathogen origin      mean           sd       Min      2.5%       25%</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 1        a   nord 0.9999334 7.145601e-05 0.9994139 0.9997338 0.9999107</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.9999946 8.330518e-06 0.9999157 0.9999702 0.9999933</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; 3        a   east 1.0000000 1.075262e-09 1.0000000 1.0000000 1.0000000</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; 4        b   nord 0.9994149 8.261901e-04 0.9936272 0.9970205 0.9992854</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 5        b  south 1.0000000 4.348297e-14 1.0000000 1.0000000 1.0000000</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 1        a   nord 0.9999348 7.360684e-05 0.9993520 0.9997170 0.9999146</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.9999948 9.399176e-06 0.9998860 0.9999699 0.9999944</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; 3        a   east 1.0000000 9.090467e-10 1.0000000 1.0000000 1.0000000</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; 4        b   nord 0.9994502 7.430256e-04 0.9933356 0.9974705 0.9993257</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 5        b  south 1.0000000 2.825555e-14 1.0000000 1.0000000 1.0000000</span></span>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#&gt; 6        b   east 1.0000000 0.000000e+00 1.0000000 1.0000000 1.0000000</span></span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="co">#&gt;         50%       75%     97.5%       Max  nsv Na&#39;s</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#&gt; 1 0.9999573 0.9999816 0.9999946 0.9999980 1001    0</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#&gt; 2 0.9999977 0.9999994 0.9999999 1.0000000 1001    0</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#&gt; 1 0.9999614 0.9999833 0.9999955 0.9999990 1001    0</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#&gt; 2 0.9999981 0.9999994 0.9999999 1.0000000 1001    0</span></span>
 <span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="co">#&gt; 3 1.0000000 1.0000000 1.0000000 1.0000000 1001    0</span></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="co">#&gt; 4 0.9997187 0.9998909 0.9999823 0.9999959 1001    0</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="co">#&gt; 4 0.9997127 0.9998861 0.9999760 0.9999944 1001    0</span></span>
 <span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a><span class="co">#&gt; 5 1.0000000 1.0000000 1.0000000 1.0000000 1001    0</span></span>
 <span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a><span class="co">#&gt; 6 1.0000000 1.0000000 1.0000000 1.0000000 1001    0</span></span></code></pre></div>
 </div>
@@ -622,7 +619,7 @@ probability of being infected (<code>trial_p</code>).</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Simple multilevel trial</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>imports_mcmodule <span class="ot">&lt;-</span> <span class="fu">trial_totals</span>(</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">mcmodule =</span> imports_mcmodule,</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="st">&quot;no_detect_a&quot;</span>, <span class="co"># trial_p</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="st">&quot;no_detect&quot;</span>, <span class="co"># trial_p</span></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">trials_n =</span> <span class="st">&quot;animals_n&quot;</span>,</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">subsets_n =</span> <span class="st">&quot;farms_n&quot;</span>,</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">subsets_p =</span> <span class="st">&quot;h_prev&quot;</span>,</span>
@@ -630,11 +627,11 @@ probability of being infected (<code>trial_p</code>).</p>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>)</span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a></span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co"># Probability that at least one infected animal from at least one farm is not detected</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="fu">mc_summary</span>(imports_mcmodule,<span class="st">&quot;no_detect_a_set&quot;</span>, <span class="at">digits=</span><span class="dv">2</span>)[,<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="fu">mc_summary</span>(imports_mcmodule,<span class="st">&quot;no_detect_set&quot;</span>, <span class="at">digits=</span><span class="dv">2</span>)[,<span class="sc">-</span><span class="dv">1</span>]</span>
 <span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt;   pathogen origin mean     sd  Min 2.5%  25%  50%  75% 97.5%  Max  nsv Na&#39;s</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 1        a   nord 0.38 0.0200 0.34 0.34 0.36 0.38 0.39  0.41 0.41 1001    0</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.30 0.0600 0.18 0.19 0.24 0.30 0.36  0.40 0.40 1001    0</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 3        a   east 0.61 0.0400 0.52 0.53 0.57 0.61 0.64  0.68 0.68 1001    0</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 1        a   nord 0.38 0.0200 0.34 0.34 0.36 0.37 0.39  0.41 0.41 1001    0</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 2        a  south 0.30 0.0600 0.18 0.19 0.25 0.31 0.35  0.40 0.40 1001    0</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 3        a   east 0.61 0.0500 0.52 0.53 0.57 0.61 0.65  0.68 0.68 1001    0</span></span>
 <span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 4        b   nord 0.99 0.0081 0.97 0.97 0.98 0.99 0.99  1.00 1.00 1001    0</span></span>
 <span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 5        b  south 0.96 0.0080 0.94 0.94 0.95 0.96 0.97  0.97 0.97 1001    0</span></span>
 <span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 6        b   east 0.97 0.0200 0.92 0.92 0.95 0.97 0.98  0.99 0.99 1001    0</span></span></code></pre></div>

@@ -35,9 +35,22 @@ layout, and draggable nodes.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Generates an interactive network visualisation using visNetwork library.
 The visualisation includes interactive features for exploring model structure
 and relationships.
+
+By default, nodes are colored as:
+\itemize{
+\item \strong{inputs} (light blue, #B0DFF9): Input datasets, data frames, files, and columns
+\item \strong{in_node} (blue, #6ABDEB): Input nodes and scalar values
+\item \strong{out_node} (green, #A4CF96): Output nodes
+\item \strong{filter} (light purple, #E8A5E5): Filtered nodes created with \code{mc_filter()}
+\item \strong{compare} (medium purple, #D88FD5): Comparison nodes created with \code{mc_compare()}
+\item \strong{trials_info} (light orange, #FAE4CB): Trial, subset, and related information nodes
+\item \strong{total} (orange, #F39200): Total nodes created with \code{at_least_one()}
+\item \strong{agg_total} (dark orange, #C17816): Aggregated total nodes created with \code{agg_totals()}
+}
 }
 \examples{
 \donttest{

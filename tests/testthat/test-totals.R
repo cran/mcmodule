@@ -97,6 +97,37 @@ suppressMessages({
     expect_error(at_least_one(test_module, c("p_1", "missing")), "not found")
   })
 
+  test_that("at_least_one works with two from_sample_design nodes", {
+    # Create test module with from_sample_design nodes
+    sample_design <- data.frame(
+      input_a = c(0.1, 0.2, 0.3),
+      stringsAsFactors = FALSE
+    )
+
+    sample_module <- eval_module(
+      exp = list(
+        sample = quote({
+          result_a <- input_a
+          result_b <- input_a + 2
+        })
+      ),
+      data = data.frame(),
+      sample_design = sample_design
+    )
+
+    # Test basic functionality
+    result <- at_least_one(
+      sample_module,
+      c("result_a", "result_b"),
+      name = "p_combined"
+    )
+
+    # Check node attributes
+    expect_equal(result$node_list$p_combined$type, "total")
+    expect_equal(result$node_list$p_combined$param, c("result_a", "result_b"))
+    expect_equal(result$node_list$p_combined$from_sample_design, TRUE)
+  })
+
   test_that("generate_all_name works", {
     # Basic functionality
     expect_equal(generate_all_name(c("test_a", "test_b")), "test_all")
@@ -237,12 +268,12 @@ suppressMessages({
 
     # Setup the test mctable
     test_mctable <- data.frame(
-      mcnode = c("sites_n"),
-      description = c("Number of sites"),
-      mc_func = c("runif"),
-      from_variable = c(NA),
-      transformation = c(NA),
-      sensi_analysis = c(FALSE)
+      mcnode = c("times_n", "sites_n"),
+      description = c("Number of trials", "Number of sites"),
+      mc_func = c("runif", "runif"),
+      from_variable = c(NA, NA),
+      transformation = c(NA, NA),
+      sample_space = c("min = 1, max = 10", "min = 2, max = 5")
     )
     set_mctable(test_mctable)
 
@@ -445,6 +476,28 @@ suppressMessages({
     )
 
     reset_mctable()
+  })
+
+  test_that("trial_totals works with sampling design", {
+    # Create a test module with mock data
+    X <- mctable_sobol_matrices(imports_mctable, N = 1000)
+    sd_module <- eval_module(
+      exp = imports_exp,
+      data = NULL,
+      sample_design = X,
+      mctable = imports_mctable
+    )
+    result <- trial_totals(
+      mcmodule = sd_module,
+      mc_names = c("no_detect"),
+      trials_n = "animals_n",
+      subsets_n = "farms_n",
+      subsets_p = "h_prev",
+      sample_design = X,
+      mctable = imports_mctable
+    )
+    expect_true("no_detect_set" %in% names(result$node_list))
+    expect_true(result$node_list$no_detect_subset_n$from_sample_design)
   })
 
   test_that("at_least_one naming options work", {
@@ -873,5 +926,186 @@ suppressMessages({
     )
 
     expect_equal(result$node_list$p_all_set$data_name, c("data_a", "data_b"))
+  })
+
+  test_that("agg_totals works with filtered mcnodes (mc_filter integration)", {
+    # Create test module with grouped data
+    test_module <- list(
+      node_list = list(
+        contact = list(
+          mcnode = mcstoc(
+            runif,
+            min = mcdata(
+              c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+              type = "0",
+              nvariates = 6
+            ),
+            max = mcdata(
+              c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7),
+              type = "0",
+              nvariates = 6
+            ),
+            nvariates = 6
+          ),
+          data_name = "contact_data",
+          keys = c("visit_type", "scenario_id")
+        )
+      ),
+      data = list(
+        contact_data = data.frame(
+          visit_type = c(
+            "vehicle",
+            "vehicle",
+            "vehicle",
+            "person",
+            "person",
+            "person"
+          ),
+          scenario_id = c("0", "0", "0", "0", "0", "0"),
+          fomite_id = c(
+            "wheels_1",
+            "wheels_2",
+            "boots",
+            "boots",
+            "equipment",
+            "gloves"
+          )
+        )
+      )
+    )
+
+    # Filter to vehicle visits only
+    filtered_module <- mc_filter(
+      test_module,
+      "contact",
+      visit_type == "vehicle",
+      suffix = "veh"
+    )
+
+    # Verify filtered node has correct dimensions
+    expect_equal(dim(filtered_module$node_list$contact_veh$mcnode)[3], 3)
+
+    # Now aggregate the filtered node
+    agg_module <- agg_totals(
+      filtered_module,
+      "contact_veh",
+      agg_keys = "scenario_id"
+    )
+
+    # Check that aggregated node was created successfully
+    expect_true("contact_veh_agg" %in% names(agg_module$node_list))
+    expect_true(is.mcnode(agg_module$node_list$contact_veh_agg$mcnode))
+
+    # Check metadata
+    expect_equal(agg_module$node_list$contact_veh_agg$type, "agg_total")
+  })
+
+  test_that("agg_totals handles single-variate groups correctly (edge case)", {
+    # Create test module where some groups will have only 1 variate
+    test_module <- list(
+      node_list = list(
+        risk = list(
+          mcnode = mcstoc(
+            runif,
+            min = mcdata(c(0.1, 0.2, 0.3, 0.4, 0.5), type = "0", nvariates = 5),
+            max = mcdata(c(0.2, 0.3, 0.4, 0.5, 0.6), type = "0", nvariates = 5),
+            nvariates = 5
+          ),
+          data_name = "test_data",
+          keys = c("category", "scenario_id")
+        )
+      ),
+      data = list(
+        test_data = data.frame(
+          category = c("A", "B", "C", "D", "E"),
+          scenario_id = c("0", "0", "0", "1", "1"),
+          stringsAsFactors = FALSE
+        )
+      )
+    )
+
+    # Aggregate by scenario_id
+    # Group 1 (scenario "0"): 3 variates (A, B, C)
+    # Group 2 (scenario "1"): 2 variates (D, E) - different from first group size
+    result <- agg_totals(
+      test_module,
+      "risk",
+      agg_keys = "scenario_id"
+    )
+
+    # Check that aggregation succeeded
+    expect_true("risk_agg" %in% names(result$node_list))
+    expect_true(is.mcnode(result$node_list$risk_agg$mcnode))
+
+    # Check that result has correct dimensions (2 groups)
+    expect_equal(dim(result$node_list$risk_agg$mcnode)[3], 2)
+
+    # Check summary
+    expect_equal(nrow(result$node_list$risk_agg$summary), 2)
+  })
+  test_that("agg_totals handles from_sample_design nodes correctly", {
+    # Create test module with a node from sample design
+    sample_design <- data.frame(
+      input_a = c(0.1, 0.2, 0.3),
+      input_b = c(0.4, 0.5, 0.6)
+    )
+    sample_module <- eval_module(
+      exp = list(
+        sample_exp = quote({
+          result_a <- input_a + 2
+          result_b <- input_b + result_a
+        })
+      ),
+      data = NULL,
+      sample_design = sample_design
+    )
+
+    # Aggregate the results
+    result <- agg_totals(
+      sample_module,
+      mc_name = c("result_b")
+    )
+
+    # Check that the aggregated node is created and has correct metadata
+    expect_true("result_b_agg" %in% names(result$node_list))
+    expect_true(is.mcnode(result$node_list$result_b_agg$mcnode))
+    expect_equal(result$node_list$result_b_agg$from_sample_design, TRUE)
+  })
+
+  test_that("agg_totals handles from_sample_design nodes with data and keys correctly", {
+    # Create test module with a node from sample design
+    sample_design <- data.frame(
+      input_a = c(0.1, 0.2, 0.3),
+      input_b = c(0.4, 0.5, 0.6)
+    )
+
+    sample_data <- data.frame(
+      input_a = c(0.1, 0.2, 0.3, 0.1, 0.2, 0.3),
+      input_b = c(0.4, 0.5, 0.6, 0.4, 0.5, 0.6),
+      category = c("A", "B", "C", "A", "B", "C"),
+      group = c("G1", "G1", "G1", "G2", "G2", "G2")
+    )
+
+    sample_module <- eval_module(
+      exp = list(
+        sample_exp = quote({
+          result_a <- input_a + 2
+          result_b <- input_b + result_a
+        })
+      ),
+      data = sample_data,
+      sample_design = sample_design
+    )
+
+    # Aggregate the results
+    result <- agg_totals(
+      sample_module,
+      mc_name = c("result_b"),
+      agg_keys = c("category")
+    )
+    # Check that the aggregated node is created and has correct metadata
+    expect_true("result_b_agg" %in% names(result$node_list))
+    expect_true(is.mcnode(result$node_list$result_b_agg$mcnode))
+    expect_equal(result$node_list$result_b_agg$from_sample_design, TRUE)
   })
 })

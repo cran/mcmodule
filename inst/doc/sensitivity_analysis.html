@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Sensitivity analysis</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Sensitivity analysis</h1>
+
+
+
+<p>Sensitivity analysis quantifies how changes in an input affect the
+model output. In risk analysis, it can be used to identify which
+uncertain inputs are most important for a decision-relevant output. This
+helps to understand the model behaviour before running it with real
+data, to prioritise where to intervene to reduce risk, and to increase
+efforts to reduce uncertainty in the most sensitive inputs.</p>
+<p>In <code>mcmodule</code>, you can perform sensitivity analysis using
+different methods:</p>
+<ul>
+<li><strong>Scenario (“what-if”) analysis:</strong> Compares output
+changes under targeted input variations, practical for model runs using
+real data. It does not produce sensitivity indices, but it can be useful
+for complex models where the most important inputs depend on
+context.</li>
+<li><strong>Correlation (tornado) analysis:</strong> Ranking of
+influential inputs by correlating each input uncertainty with output
+uncertainty across existing runs. Only captures inputs that are
+uncertain in those runs. It can be applied to multi-variate inputs, but
+interpretation can be more complex when correlations vary across
+variates.</li>
+<li><strong>Sample design based sensitivity analysis:</strong> Evaluates
+the model on a predefined input design (e.g., Morris/Sobol) to estimate
+sensitivity over a chosen input space using packages such as
+<strong>sensitivity</strong> or <strong>sensobol</strong> and yield
+sensitivity indices. In <code>mcmodule</code>, this method is currently
+limited to one variate.</li>
+</ul>
+<div id="scenario-analysis" class="section level1">
+<h1>Scenario analysis</h1>
+<p>Scenario analysis (or “what-if analysis”) is a non-statistical but
+still useful approach to assess input sensitivity. It does not produce
+sensitivity indices, but it will show how the output changes when you
+make specific changes to the inputs. This makes it a practical way to
+compare targeted input changes using real input data. It is especially
+helpful for complex models where the most important inputs depend on
+context (for example, when estimating disease-entry risk across
+countries, where certain pathways will be more important in some
+countries than in others). Scenario analysis can therefore help you
+identify the most sensitive inputs for a particular use case. This topic
+is covered in the <a href="https://nataliaciria.com/mcmodule/articles/mcmodule.html#working-with-what-if-scenarios">working
+with what-if scenarios</a> section.</p>
+</div>
+<div id="correlation-analysis" class="section level1">
+<h1>Correlation analysis</h1>
+<p><code>mcmodule_corr()</code> is a <strong>screening</strong> method.
+It ranks inputs by their correlation with a chosen output across the
+current model runs (an extension of <code>mc2d::tornado()</code> for
+<code>mcmodule</code> objects and multiple variates). It can quickly
+highlight influential inputs, but results must be interpreted with care.
+A weak correlation does not necessarily mean an input is unimportant
+(e.g., symmetric nonlinear effects can cancel out), and a strong
+correlation may reflect confounding with other correlated inputs rather
+than a uniquely attributable effect.</p>
+<p>Unlike methods that require a sample design, this approach works
+directly on an <code>mcmodule</code> built from model input data. Note
+that <code>mcmodule_corr()</code> only computes correlations for
+uncertain inputs (stochastic nodes built with <code>func</code>) and,
+when <code>variates_as_nsv = TRUE</code>, also for multi-variate
+inputs.</p>
+<p>First, compute correlations (Spearman by default) and inspect the
+table.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Calculate output (expected number of animals not detected)</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>imports_mcmodule_corr <span class="ot">&lt;-</span> <span class="fu">trial_totals</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  imports_mcmodule,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="fu">c</span>(<span class="st">&quot;no_detect&quot;</span>),</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">trials_n =</span> <span class="st">&quot;animals_n&quot;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">subsets_n =</span> <span class="st">&quot;farms_n&quot;</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">subsets_p =</span> <span class="st">&quot;h_prev&quot;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="at">mctable =</span> imports_mctable</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>)</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co"># Calculate correlations using Spearman&#39;s method (default)</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>corr_results <span class="ot">&lt;-</span> <span class="fu">mcmodule_corr</span>(imports_mcmodule_corr, <span class="at">output =</span> <span class="st">&quot;no_detect_set_n&quot;</span>, <span class="at">method =</span> <span class="st">&quot;spearman&quot;</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; === Correlation Analysis Summary ===</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; Analysis Parameters:</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#&gt; - Analysis type: Global output</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="co">#&gt; - Output node: no_detect_set_n</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#&gt; - Correlation method(s): spearman</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co">#&gt; - Missing value handling: all.obs</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a><span class="co">#&gt; Expression Information:</span></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a><span class="co">#&gt; - Module: mcmodule</span></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a><span class="co">#&gt;   - Expression: imports</span></span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a><span class="co">#&gt;     - Input nodes: w_prev, test_sensi, animals_n, h_prev</span></span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a><span class="co">#&gt;     - Variates analyzed: 6</span></span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a><span class="co">#&gt; Results Summary:</span></span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a><span class="co">#&gt; - Total correlations calculated: 24</span></span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a><span class="co">#&gt; - Top 4 most influential inputs (by absolute mean correlation):</span></span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a><span class="co">#&gt;   1. h_prev: 0.7286</span></span>
+<span id="cb1-32"><a href="#cb1-32" tabindex="-1"></a><span class="co">#&gt;   2. w_prev: 0.4552</span></span>
+<span id="cb1-33"><a href="#cb1-33" tabindex="-1"></a><span class="co">#&gt;   3. animals_n: 0.2987</span></span>
+<span id="cb1-34"><a href="#cb1-34" tabindex="-1"></a><span class="co">#&gt;   4. test_sensi: -0.1525</span></span>
+<span id="cb1-35"><a href="#cb1-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-36"><a href="#cb1-36" tabindex="-1"></a><span class="co">#&gt; Input Correlation Strength Distribution:</span></span>
+<span id="cb1-37"><a href="#cb1-37" tabindex="-1"></a><span class="co">#&gt; - Very strong: 2 (8.3%)</span></span>
+<span id="cb1-38"><a href="#cb1-38" tabindex="-1"></a><span class="co">#&gt; - Strong: 4 (16.7%)</span></span>
+<span id="cb1-39"><a href="#cb1-39" tabindex="-1"></a><span class="co">#&gt; - Moderate: 8 (33.3%)</span></span>
+<span id="cb1-40"><a href="#cb1-40" tabindex="-1"></a><span class="co">#&gt; - Weak: 4 (16.7%)</span></span>
+<span id="cb1-41"><a href="#cb1-41" tabindex="-1"></a><span class="co">#&gt; - Very weak/None: 6 (25.0%)</span></span>
+<span id="cb1-42"><a href="#cb1-42" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-43"><a href="#cb1-43" tabindex="-1"></a><span class="co">#&gt; Inputs by Correlation Strength:</span></span>
+<span id="cb1-44"><a href="#cb1-44" tabindex="-1"></a><span class="co">#&gt; - Very strong: h_prev</span></span>
+<span id="cb1-45"><a href="#cb1-45" tabindex="-1"></a><span class="co">#&gt; - Strong: w_prev, h_prev, test_sensi</span></span>
+<span id="cb1-46"><a href="#cb1-46" tabindex="-1"></a><span class="co">#&gt; - Moderate: animals_n, h_prev, w_prev</span></span>
+<span id="cb1-47"><a href="#cb1-47" tabindex="-1"></a><span class="co">#&gt; - Weak: w_prev, animals_n, test_sensi</span></span>
+<span id="cb1-48"><a href="#cb1-48" tabindex="-1"></a><span class="co">#&gt; - Very weak/None: test_sensi, animals_n</span></span></code></pre></div>
+<p>In this example, <code>h_prev</code> is the main driver of
+<code>no_detect_set_n</code> (very strong positive association).
+<code>w_prev</code> and <code>animals_n</code> also show positive
+correlation, while <code>test_sensi</code> is close to zero or slightly
+negative across variates.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># View correlation results</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">head</span>(corr_results)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt;       exp exp_n variate          output      input       value   method     use</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; 1 imports     1       1 no_detect_set_n     w_prev 0.684520665 spearman all.obs</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; 2 imports     1       1 no_detect_set_n test_sensi 0.015206219 spearman all.obs</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; 3 imports     1       1 no_detect_set_n  animals_n 0.479727721 spearman all.obs</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; 4 imports     1       1 no_detect_set_n     h_prev 0.516945462 spearman all.obs</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; 5 imports     1       2 no_detect_set_n     w_prev 0.312842343 spearman all.obs</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; 6 imports     1       2 no_detect_set_n test_sensi 0.002070648 spearman all.obs</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;     module pathogen origin       strength</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt; 1 mcmodule        a   nord         Strong</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 2 mcmodule        a   nord Very weak/None</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 3 mcmodule        a   nord       Moderate</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 4 mcmodule        a   nord       Moderate</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 5 mcmodule        a  south           Weak</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 6 mcmodule        a  south Very weak/None</span></span></code></pre></div>
+<p>Then visualise the ranking with a tornado plot. It can be customised
+with standard <code>ggplot2</code> layers.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;ggplot2&#39; was built under R version 4.5.3</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co"># Plot tornado plot of correlations</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">mcmodule_tornado</span>(imports_mcmodule_corr, <span class="at">output =</span> <span class="st">&quot;no_detect_set_n&quot;</span>, <span class="at">method =</span> <span class="st">&quot;spearman&quot;</span>, <span class="at">print_summary =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p>Each point in the plot represents one input variate. The coloured
+point marks the variate with the largest absolute correlation for that
+input, and that value is used to rank the inputs. The black point shows
+the median correlation across variates, which is often a useful summary
+when correlations vary across the model. The black horizontal line shows
+the full range of correlations across variates, so you can see whether
+an input is consistently influential or only influential in certain
+variates.</p>
+<p>Note that <code>farms_n</code> and <code>test_origin</code> are not
+shown in this analysis because they are fixed in the original model data
+and therefore have zero correlation with the output. This is an
+important limitation of correlation-based methods using real input data:
+they can only identify influential inputs that vary in the original
+model runs. To explore uncertainty for fixed inputs, you need a method
+that evaluates a sample design.</p>
+</div>
+<div id="sensitivity-analysis-with-sample-design" class="section level1">
+<h1>Sensitivity analysis with sample design</h1>
+<div id="create-a-sample-design" class="section level2">
+<h2>Create a sample design</h2>
+<p>An input <strong>sample space</strong> is the allowable range of
+values it can take (or distribution definition). A <strong>sample
+design</strong> is a specific set of sampled input combinations used to
+run the model. The sample space defines <em>where</em> values can come
+from, while the sample design defines <em>which</em> values are actually
+used in model runs.</p>
+<p>A <code>sample_design</code> in <code>mcmodule</code> can be
+either:</p>
+<ul>
+<li>a matrix/data frame, or</li>
+<li>a sensitivity object from the <code>sensitivity::sensitivity</code>
+package (for example, a Morris design object) that has an <code>X</code>
+element containing the sampling matrix.</li>
+</ul>
+<p>The <strong>sampling matrix</strong> must have <strong>one column per
+input node and one row per sample</strong>. Each row is one scenario in
+the mcnode uncertainty dimension. When you provide a sample_design, that
+uncertainty dimension is no longer sampled from the original model
+inputs; it is mapped to the values in your design. Currently,
+sample_design supports one variate.</p>
+<p>You can pass the sampling matrix (or sensitivity object) directly to
+<code>eval_module()</code>, or set it as a global default with
+<code>set_sample_design()</code>. Using a global design ensures the same
+sampling matrix is available across all model steps, which is convenient
+when you run sensitivity analysis after building a complex model. You
+can also pass the design to each function call, but that is more
+verbose, and you must remove it later to run the model with the original
+data inputs.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Create a sample design as a data frame</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">w_prev =</span> <span class="fu">runif</span>(<span class="dv">10000</span>, <span class="fl">0.15</span>, <span class="fl">0.6</span>),</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">h_prev =</span> <span class="fu">runif</span>(<span class="dv">10000</span>, <span class="fl">0.02</span>, <span class="fl">0.7</span>),</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">test_sensi =</span> <span class="fu">runif</span>(<span class="dv">10000</span>, <span class="fl">0.8</span>, <span class="fl">0.91</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">animals_n =</span> <span class="fu">sample</span>(<span class="dv">5</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">10000</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">farms_n =</span> <span class="fu">sample</span>(<span class="dv">82</span><span class="sc">:</span><span class="dv">176</span>, <span class="dv">10000</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">test_origin =</span> <span class="fu">runif</span>(<span class="dv">10000</span>, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="fu">dim</span>(X)</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; [1] 10000     6</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="fu">head</span>(X)</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;      w_prev    h_prev test_sensi animals_n farms_n test_origin</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 1 0.3340396 0.6117728  0.8477135         7     129  0.44193520</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 2 0.5473578 0.2434982  0.8176573         6     163  0.03386385</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; 3 0.5732103 0.1054768  0.8905329         6     157  0.63026555</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; 4 0.1705004 0.2622306  0.8228900        10     133  0.15496632</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; 5 0.3876475 0.6528754  0.8313463         8     117  0.66649531</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; 6 0.5515886 0.6151214  0.8600830         8     109  0.82409581</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co"># Set global sample design</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="fu">set_sample_design</span>(X)</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; sample_design set to X</span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co"># Retrieve current global sample design</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>current_design <span class="ot">&lt;-</span> <span class="fu">set_sample_design</span>()</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co"># Evaluate the module with the global sample design</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a>imports_mcmodule_X <span class="ot">&lt;-</span> <span class="fu">eval_module</span>(</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>  <span class="at">exp =</span> imports_exp</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a>)</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; imports_exp evaluated</span></span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt; mcmodule created (expressions: imports_exp)</span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a></span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co"># Calculate output (expected number of animals not detected)</span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a>imports_mcmodule_X <span class="ot">&lt;-</span> <span class="fu">trial_totals</span>(</span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a>  imports_mcmodule_X,</span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="fu">c</span>(<span class="st">&quot;no_detect&quot;</span>),</span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a>  <span class="at">trials_n =</span> <span class="st">&quot;animals_n&quot;</span>,</span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a>  <span class="at">subsets_n =</span> <span class="st">&quot;farms_n&quot;</span>,</span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a>  <span class="at">subsets_p =</span> <span class="st">&quot;h_prev&quot;</span></span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a>)</span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a></span>
+<span id="cb4-45"><a href="#cb4-45" tabindex="-1"></a><span class="fu">mcmodule_tornado</span>(imports_mcmodule_X, <span class="at">output =</span> <span class="st">&quot;no_detect_set_n&quot;</span>, <span class="at">method =</span> <span class="st">&quot;spearman&quot;</span>)</span>
+<span id="cb4-46"><a href="#cb4-46" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-47"><a href="#cb4-47" tabindex="-1"></a><span class="co">#&gt; === Correlation Analysis Summary ===</span></span>
+<span id="cb4-48"><a href="#cb4-48" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-49"><a href="#cb4-49" tabindex="-1"></a><span class="co">#&gt; Analysis Parameters:</span></span>
+<span id="cb4-50"><a href="#cb4-50" tabindex="-1"></a><span class="co">#&gt; - Analysis type: Global output</span></span>
+<span id="cb4-51"><a href="#cb4-51" tabindex="-1"></a><span class="co">#&gt; - Output node: no_detect_set_n</span></span>
+<span id="cb4-52"><a href="#cb4-52" tabindex="-1"></a><span class="co">#&gt; - Correlation method(s): spearman</span></span>
+<span id="cb4-53"><a href="#cb4-53" tabindex="-1"></a><span class="co">#&gt; - Missing value handling: all.obs</span></span>
+<span id="cb4-54"><a href="#cb4-54" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-55"><a href="#cb4-55" tabindex="-1"></a><span class="co">#&gt; Expression Information:</span></span>
+<span id="cb4-56"><a href="#cb4-56" tabindex="-1"></a><span class="co">#&gt; - Module: mcmodule</span></span>
+<span id="cb4-57"><a href="#cb4-57" tabindex="-1"></a><span class="co">#&gt;   - Expression: imports_exp</span></span>
+<span id="cb4-58"><a href="#cb4-58" tabindex="-1"></a><span class="co">#&gt;     - Input nodes: w_prev, test_origin, test_sensi, animals_n, farms_n, h_prev</span></span>
+<span id="cb4-59"><a href="#cb4-59" tabindex="-1"></a><span class="co">#&gt;     - Variates analyzed: 1</span></span>
+<span id="cb4-60"><a href="#cb4-60" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-61"><a href="#cb4-61" tabindex="-1"></a><span class="co">#&gt; Results Summary:</span></span>
+<span id="cb4-62"><a href="#cb4-62" tabindex="-1"></a><span class="co">#&gt; - Total correlations calculated: 6</span></span>
+<span id="cb4-63"><a href="#cb4-63" tabindex="-1"></a><span class="co">#&gt; - Top 5 most influential inputs (by absolute mean correlation):</span></span>
+<span id="cb4-64"><a href="#cb4-64" tabindex="-1"></a><span class="co">#&gt;   1. h_prev: 0.6786</span></span>
+<span id="cb4-65"><a href="#cb4-65" tabindex="-1"></a><span class="co">#&gt;   2. test_origin: -0.4723</span></span>
+<span id="cb4-66"><a href="#cb4-66" tabindex="-1"></a><span class="co">#&gt;   3. w_prev: 0.3440</span></span>
+<span id="cb4-67"><a href="#cb4-67" tabindex="-1"></a><span class="co">#&gt;   4. animals_n: 0.2187</span></span>
+<span id="cb4-68"><a href="#cb4-68" tabindex="-1"></a><span class="co">#&gt;   5. farms_n: 0.2075</span></span>
+<span id="cb4-69"><a href="#cb4-69" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-70"><a href="#cb4-70" tabindex="-1"></a><span class="co">#&gt; Input Correlation Strength Distribution:</span></span>
+<span id="cb4-71"><a href="#cb4-71" tabindex="-1"></a><span class="co">#&gt; - Very strong: 0 (0.0%)</span></span>
+<span id="cb4-72"><a href="#cb4-72" tabindex="-1"></a><span class="co">#&gt; - Strong: 1 (16.7%)</span></span>
+<span id="cb4-73"><a href="#cb4-73" tabindex="-1"></a><span class="co">#&gt; - Moderate: 1 (16.7%)</span></span>
+<span id="cb4-74"><a href="#cb4-74" tabindex="-1"></a><span class="co">#&gt; - Weak: 3 (50.0%)</span></span>
+<span id="cb4-75"><a href="#cb4-75" tabindex="-1"></a><span class="co">#&gt; - Very weak/None: 1 (16.7%)</span></span>
+<span id="cb4-76"><a href="#cb4-76" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-77"><a href="#cb4-77" tabindex="-1"></a><span class="co">#&gt; Inputs by Correlation Strength:</span></span>
+<span id="cb4-78"><a href="#cb4-78" tabindex="-1"></a><span class="co">#&gt; - Strong: h_prev</span></span>
+<span id="cb4-79"><a href="#cb4-79" tabindex="-1"></a><span class="co">#&gt; - Moderate: test_origin</span></span>
+<span id="cb4-80"><a href="#cb4-80" tabindex="-1"></a><span class="co">#&gt; - Weak: w_prev, animals_n, farms_n</span></span>
+<span id="cb4-81"><a href="#cb4-81" tabindex="-1"></a><span class="co">#&gt; - Very weak/None: test_sensi</span></span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co"># Reset global sample design</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">reset_sample_design</span>()</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; sample_design reset</span></span></code></pre></div>
+<p>This sample design produces a different ranking from the first
+tornado analysis, because we’re using the inputs sampling space rather
+than the original model inputs. Here, <code>h_prev</code> is the main
+positive driver of <code>no_detect_set_n</code>.
+<code>test_origin</code> is the next most influential input and is
+negatively associated with the output. <code>w_prev</code>,
+<code>animals_n</code> and <code>farms_n</code> have smaller positive
+effects, while <code>test_sensi</code> is weak or negligible within
+these bounds.</p>
+</div>
+<div id="define-sample-space-in-mctable" class="section level2">
+<h2>Define sample space in <code>mctable</code></h2>
+<p>For methods that use a sample design, <code>mctable</code> can be
+used to define how inputs are sampled. In particular,
+<code>mctable$sample_space</code> stores the bounds or distribution
+parameters used to generate sensitivity samples. To read more about
+<code>mctable</code> see the <a href="https://nataliaciria.com/mcmodule/articles/mcmodule.html#mcnodes-table">package
+vignette</a>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>imports_mctable[,<span class="fu">c</span>(<span class="st">&quot;mcnode&quot;</span>,<span class="st">&quot;mc_func&quot;</span>, <span class="st">&quot;sample_space&quot;</span>)]</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt;            mcnode mc_func                        sample_space</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; 1          h_prev   runif               min = 0.02, max = 0.7</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 2          w_prev   runif               min = 0.15, max = 0.6</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 3      test_sensi   rpert min = 0.8, mode = 0.875, max = 0.91</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 4         farms_n    &lt;NA&gt;                   min = 5, max = 10</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 5       animals_n   rnorm                 min = 82, max = 176</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 6 test_origin_unk    &lt;NA&gt;                                &lt;NA&gt;</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 7     test_origin    &lt;NA&gt;                    min = 0, max = 1</span></span></code></pre></div>
+<p>Two helper functions support common sampling designs from
+<code>mctable</code>:</p>
+<ul>
+<li><code>mctable_bounds()</code> for bound (<em>min</em> and
+<em>max</em>) extraction, for Morris and related approaches.</li>
+<li><code>mctable_sobol_matrices()</code> for Sobol design
+matrices.</li>
+</ul>
+<p>Currently, <code>mcmodule</code> only provides direct conversion from
+<code>mctable</code> to Sobol sampling designs. However, you can use
+<code>mctable_bounds()</code> to create many other sample designs using
+different approaches. The only requirement is that your sample design
+matrix contains columns for all the input nodes in your
+<code>mcmodule</code> model.</p>
+</div>
+<div id="morris-elementary-effects" class="section level2">
+<h2>Morris elementary effects</h2>
+<p>Morris is another <strong>screening</strong> method. It identifies
+influential inputs at moderate computational cost and highlights
+potential nonlinearity or interactions.</p>
+<p>Start by getting parameter bounds from <code>mctable</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Get bounds for Morris sampling design</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">mctable_bounds</span>(imports_mctable, <span class="at">transformation =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>Build the Morris design with <code>sensitivity::morris()</code>. The
+resulting object can be passed directly as <code>sample_design</code>.
+The arguments <code>factors</code>, <code>r</code>, and
+<code>design</code> control the the factors (inputs) sampled, the number
+of repetitions of the design, and the step size between sampled values,
+respectively. The arguments <code>binf</code> and <code>bsup</code>
+provide the bounds for each input, and <code>scale = TRUE</code> scales
+the inputs to [0,1] for better comparability of Morris indices across
+inputs with different ranges.</p>
+<p>To have stable Morris indices in large sample designs (with many
+inputs), you need to run the model with a large number of repetitions,
+which can be computationally intensive. Always check the sensitivity
+indices stability in diferent runs before interpreting them, increase r
+until rankings stabilise.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">library</span>(sensitivity)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt; Warning: package &#39;sensitivity&#39; was built under R version 4.5.2</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; Registered S3 method overwritten by &#39;sensitivity&#39;:</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt;   method    from </span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;   print.src dplyr</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;sensitivity&#39;</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; The following object is masked from &#39;package:dplyr&#39;:</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt;     src</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co"># Create Morris design</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>morris_sa <span class="ot">&lt;-</span> sensitivity<span class="sc">::</span><span class="fu">morris</span>(</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">model =</span> <span class="cn">NULL</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="at">factors =</span> b<span class="sc">$</span>factors,</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="at">r =</span> <span class="dv">2000</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  <span class="at">design =</span> <span class="fu">list</span>(<span class="at">type =</span> <span class="st">&quot;oat&quot;</span>, <span class="at">levels =</span> <span class="dv">4</span>, <span class="at">grid.jump =</span> <span class="dv">2</span>),</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  <span class="at">binf =</span> b<span class="sc">$</span>binf,</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  <span class="at">bsup =</span> b<span class="sc">$</span>bsup,</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  <span class="at">scale =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>)</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; Warning in sensitivity::morris(model = NULL, factors = b$factors, r = 2000, :</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; keeping 1999 repetitions out of 2000</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co"># Evaluate the module with that design.</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a>imports_mcmodule_morris <span class="ot">&lt;-</span> <span class="fu">eval_module</span>(</span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a>  <span class="at">exp =</span> imports_exp,</span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a>  <span class="at">sample_design =</span> morris_sa,</span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a>  <span class="at">mctable =</span> imports_mctable</span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a>)</span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a><span class="co">#&gt; imports_exp evaluated</span></span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a><span class="co">#&gt; mcmodule created (expressions: imports_exp)</span></span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a></span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a><span class="co"># Calculate output (expected number of animals not detected)</span></span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a>imports_mcmodule_morris <span class="ot">&lt;-</span> <span class="fu">trial_totals</span>(</span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a>  imports_mcmodule_morris,</span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="fu">c</span>(<span class="st">&quot;no_detect&quot;</span>),</span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a>  <span class="at">trials_n =</span> <span class="st">&quot;animals_n&quot;</span>,</span>
+<span id="cb8-39"><a href="#cb8-39" tabindex="-1"></a>  <span class="at">subsets_n =</span> <span class="st">&quot;farms_n&quot;</span>,</span>
+<span id="cb8-40"><a href="#cb8-40" tabindex="-1"></a>  <span class="at">subsets_p =</span> <span class="st">&quot;h_prev&quot;</span>,</span>
+<span id="cb8-41"><a href="#cb8-41" tabindex="-1"></a>  <span class="at">sample_design =</span> morris_sa,</span>
+<span id="cb8-42"><a href="#cb8-42" tabindex="-1"></a>  <span class="at">mctable =</span> imports_mctable</span>
+<span id="cb8-43"><a href="#cb8-43" tabindex="-1"></a>)</span></code></pre></div>
+<p>Finally, extract the output vector and estimate Morris indices. The
+<code>tell()</code> function updates the Morris object with the model
+output, and then you can print and plot the indices.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Extract the output vector and estimate Morris indices.</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">unmc</span>(imports_mcmodule_morris<span class="sc">$</span>node_list<span class="sc">$</span>no_detect_set_n<span class="sc">$</span>mcnode)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># Aggregated output used for sensitivity analysis.</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>sensitivity<span class="sc">::</span><span class="fu">tell</span>(morris_sa, y)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Print Morris indices</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>morris_sa</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; sensitivity::morris(model = NULL, factors = b$factors, r = 2000,     design = list(type = &quot;oat&quot;, levels = 4, grid.jump = 2), binf = b$binf,     bsup = b$bsup, scale = TRUE)</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt; Model runs: 13993 </span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt;                      mu    mu.star     sigma</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt; h_prev       139.808877 139.808877 124.93784</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="co">#&gt; w_prev        89.096448  89.096448  98.97369</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co">#&gt; test_sensi    -7.335186   7.335186  10.79865</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="co">#&gt; farms_n       50.032335  50.032335  61.29715</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt; animals_n     55.904818  55.904818  69.23723</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt; test_origin -111.438795 111.438795 110.73603</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co"># Plot Morris indices (mu.star and sigma)</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="fu">plot</span>(morris_sa)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p>In the Morris method, <code>mu</code> ( <span class="math inline">\(\mu\)</span> ) is the mean of the elementary
+effects across trajectories and <code>mu.star</code> ( <span class="math inline">\(\mu^*\)</span> ) is the absolute value of
+<code>mu</code>, which summarises each input’s overall importance
+(larger values indicate a stronger average influence on the output,
+regardless of direction). <code>h_prev</code> has the largest
+<code>mu.star</code>, making it the most influential input overall,
+followed by <code>test_origin</code>. <code>w_prev</code> is the next
+most important, while <code>farms_n</code> and <code>animals_n</code>
+have more moderate effects, and <code>test_sensi</code> is negligible
+within the explored bounds (note that the uncertainty is small,
+0.875-0.91). <code>sigma</code> ( <span class="math inline">\(\sigma\)</span> ) is the standard deviation of the
+elementary effects. Large <code>sigma</code> values indicate that the
+effect of an input varies substantially across the sampled space, which
+typically reflects nonlinearity and/or interactions with other
+inputs.</p>
+</div>
+<div id="sobol-indices" class="section level2">
+<h2>Sobol indices</h2>
+<p>Sobol analysis decomposes output variance into first-order and
+higher-order effects, providing a global sensitivity analysis. It is
+more computationally intensive than Morris, but it gives a more complete
+picture of input importance, including interactions. Sobol variance
+decomposition assumes independent inputs, if inputs are dependent,
+interpret Sobol indices with care or consider other approaches.</p>
+<p>First, generate Sobol sampling matrices from
+<code>mctable</code>.</p>
+<p><code>mctable_sobol_matrices()</code> creates Sobol design matrices
+from your <code>mctable</code> definitions.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">library</span>(sensobol)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">mctable_sobol_matrices</span>(imports_mctable, <span class="at">N =</span> N, <span class="at">order =</span> <span class="st">&quot;second&quot;</span>)</span></code></pre></div>
+<p>Evaluate the module, compute the target output as before.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>imports_mcmodule_sobol <span class="ot">&lt;-</span> <span class="fu">eval_module</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">exp =</span> imports_exp,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">data =</span> <span class="cn">NULL</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">sample_design =</span> X,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">mctable =</span> imports_mctable</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; imports_exp evaluated</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; mcmodule created (expressions: imports_exp)</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>imports_mcmodule_sobol <span class="ot">&lt;-</span> <span class="fu">trial_totals</span>(</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="at">mcmodule =</span> imports_mcmodule_sobol,</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  <span class="at">mc_names =</span> <span class="fu">c</span>(<span class="st">&quot;no_detect&quot;</span>),</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>  <span class="at">trials_n =</span> <span class="st">&quot;animals_n&quot;</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  <span class="at">subsets_n =</span> <span class="st">&quot;farms_n&quot;</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>  <span class="at">subsets_p =</span> <span class="st">&quot;h_prev&quot;</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>  <span class="at">sample_design =</span> X,</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>  <span class="at">mctable =</span> imports_mctable</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>)</span></code></pre></div>
+<p>Then compute first-order (<code>Si</code>) and total-order
+(<code>Ti</code>) Sobol indices and print and plot the results.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">unmc</span>(imports_mcmodule_sobol<span class="sc">$</span>node_list<span class="sc">$</span>no_detect_set_n<span class="sc">$</span>mcnode)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co"># Compute Sobol indices</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>sobol_sa <span class="ot">&lt;-</span> sensobol<span class="sc">::</span><span class="fu">sobol_indices</span>(<span class="at">Y =</span> y, <span class="at">N =</span> N, <span class="at">params =</span> <span class="fu">colnames</span>(X), <span class="at">order =</span> <span class="st">&quot;second&quot;</span>, <span class="at">boot =</span> <span class="cn">TRUE</span>, <span class="at">R =</span> <span class="dv">1000</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>sobol_sa</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; First-order estimator: saltelli | Total-order estimator: jansen </span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; Total number of model runs: 230000 </span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; Sum of first order indices: 0.7854101 </span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;          original          bias    std.error        low.ci      high.ci</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;             &lt;num&gt;         &lt;num&gt;        &lt;num&gt;         &lt;num&gt;        &lt;num&gt;</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt;  1:  3.332841e-01  2.806764e-04 1.504341e-02  0.3035188778 0.3624879705</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt;  2:  1.377370e-01  1.157053e-04 1.010515e-02  0.1178155716 0.1574270136</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt;  3:  3.909247e-04  8.930736e-06 5.250725e-04 -0.0006471292 0.0014111171</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt;  4:  4.305921e-02 -2.409696e-04 5.966784e-03  0.0316054992 0.0549948618</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt;  5:  4.684154e-02  2.136317e-04 6.030061e-03  0.0348092104 0.0584466142</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt;  6:  2.240974e-01 -1.665205e-04 1.286802e-02  0.1990430331 0.2494847426</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt;  7:  4.907211e-01  5.028705e-04 1.220140e-02  0.4663039437 0.5141325541</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt;  8:  2.289120e-01  1.739086e-04 6.448966e-03  0.2160983631 0.2413778446</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt;  9:  7.520003e-04  1.397912e-06 3.137228e-05  0.0006891139 0.0008120909</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt; 10:  7.602997e-02  7.511655e-05 2.189468e-03  0.0716635768 0.0802461326</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt; 11:  9.089470e-02  2.177806e-05 2.819738e-03  0.0853463316 0.0963995033</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt; 12:  3.490372e-01  1.310243e-04 9.342170e-03  0.3305958773 0.3672165122</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#&gt; 13:  4.242323e-02 -3.018290e-04 7.306883e-03  0.0284038338 0.0570462888</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#&gt; 14:  2.276340e-04 -1.191114e-05 4.058860e-04 -0.0005559768 0.0010350670</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="co">#&gt; 15:  1.158978e-02 -1.230634e-04 4.097145e-03  0.0036825872 0.0197430993</span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co">#&gt; 16:  1.559113e-02 -6.954566e-05 4.275403e-03  0.0072810375 0.0240403091</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#&gt; 17:  6.621890e-02 -3.633257e-04 8.412995e-03  0.0500930632 0.0830713962</span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#&gt; 18:  1.986587e-05  7.138970e-07 2.632880e-04 -0.0004968831 0.0005351870</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#&gt; 19:  4.869421e-03 -1.850100e-05 2.874968e-03 -0.0007469115 0.0105227557</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#&gt; 20:  5.898327e-03  5.734532e-05 2.902983e-03  0.0001512393 0.0115307250</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co">#&gt; 21:  3.005418e-02  3.219238e-05 6.185212e-03  0.0178991922 0.0421447759</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="co">#&gt; 22: -5.842551e-06 -2.641477e-07 1.364565e-04 -0.0002730283 0.0002618715</span></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co">#&gt; 23:  4.855472e-05  8.737696e-06 1.659606e-04 -0.0002854598 0.0003650939</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co">#&gt; 24: -1.751435e-05 -1.019615e-05 3.833124e-04 -0.0007585966 0.0007439603</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a><span class="co">#&gt; 25:  2.403328e-03  2.678811e-05 1.661811e-03 -0.0008805490 0.0056336294</span></span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="co">#&gt; 26:  7.210102e-03 -1.289130e-04 3.450360e-03  0.0005764332 0.0141015960</span></span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a><span class="co">#&gt; 27:  8.240894e-03 -3.590833e-05 3.802195e-03  0.0008246376 0.0157289665</span></span>
+<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a><span class="co">#&gt;          original          bias    std.error        low.ci      high.ci</span></span>
+<span id="cb12-43"><a href="#cb12-43" tabindex="-1"></a><span class="co">#&gt;             &lt;num&gt;         &lt;num&gt;        &lt;num&gt;         &lt;num&gt;        &lt;num&gt;</span></span>
+<span id="cb12-44"><a href="#cb12-44" tabindex="-1"></a><span class="co">#&gt;     sensitivity             parameters</span></span>
+<span id="cb12-45"><a href="#cb12-45" tabindex="-1"></a><span class="co">#&gt;          &lt;char&gt;                 &lt;char&gt;</span></span>
+<span id="cb12-46"><a href="#cb12-46" tabindex="-1"></a><span class="co">#&gt;  1:          Si                 h_prev</span></span>
+<span id="cb12-47"><a href="#cb12-47" tabindex="-1"></a><span class="co">#&gt;  2:          Si                 w_prev</span></span>
+<span id="cb12-48"><a href="#cb12-48" tabindex="-1"></a><span class="co">#&gt;  3:          Si             test_sensi</span></span>
+<span id="cb12-49"><a href="#cb12-49" tabindex="-1"></a><span class="co">#&gt;  4:          Si                farms_n</span></span>
+<span id="cb12-50"><a href="#cb12-50" tabindex="-1"></a><span class="co">#&gt;  5:          Si              animals_n</span></span>
+<span id="cb12-51"><a href="#cb12-51" tabindex="-1"></a><span class="co">#&gt;  6:          Si            test_origin</span></span>
+<span id="cb12-52"><a href="#cb12-52" tabindex="-1"></a><span class="co">#&gt;  7:          Ti                 h_prev</span></span>
+<span id="cb12-53"><a href="#cb12-53" tabindex="-1"></a><span class="co">#&gt;  8:          Ti                 w_prev</span></span>
+<span id="cb12-54"><a href="#cb12-54" tabindex="-1"></a><span class="co">#&gt;  9:          Ti             test_sensi</span></span>
+<span id="cb12-55"><a href="#cb12-55" tabindex="-1"></a><span class="co">#&gt; 10:          Ti                farms_n</span></span>
+<span id="cb12-56"><a href="#cb12-56" tabindex="-1"></a><span class="co">#&gt; 11:          Ti              animals_n</span></span>
+<span id="cb12-57"><a href="#cb12-57" tabindex="-1"></a><span class="co">#&gt; 12:          Ti            test_origin</span></span>
+<span id="cb12-58"><a href="#cb12-58" tabindex="-1"></a><span class="co">#&gt; 13:         Sij          h_prev.w_prev</span></span>
+<span id="cb12-59"><a href="#cb12-59" tabindex="-1"></a><span class="co">#&gt; 14:         Sij      h_prev.test_sensi</span></span>
+<span id="cb12-60"><a href="#cb12-60" tabindex="-1"></a><span class="co">#&gt; 15:         Sij         h_prev.farms_n</span></span>
+<span id="cb12-61"><a href="#cb12-61" tabindex="-1"></a><span class="co">#&gt; 16:         Sij       h_prev.animals_n</span></span>
+<span id="cb12-62"><a href="#cb12-62" tabindex="-1"></a><span class="co">#&gt; 17:         Sij     h_prev.test_origin</span></span>
+<span id="cb12-63"><a href="#cb12-63" tabindex="-1"></a><span class="co">#&gt; 18:         Sij      w_prev.test_sensi</span></span>
+<span id="cb12-64"><a href="#cb12-64" tabindex="-1"></a><span class="co">#&gt; 19:         Sij         w_prev.farms_n</span></span>
+<span id="cb12-65"><a href="#cb12-65" tabindex="-1"></a><span class="co">#&gt; 20:         Sij       w_prev.animals_n</span></span>
+<span id="cb12-66"><a href="#cb12-66" tabindex="-1"></a><span class="co">#&gt; 21:         Sij     w_prev.test_origin</span></span>
+<span id="cb12-67"><a href="#cb12-67" tabindex="-1"></a><span class="co">#&gt; 22:         Sij     test_sensi.farms_n</span></span>
+<span id="cb12-68"><a href="#cb12-68" tabindex="-1"></a><span class="co">#&gt; 23:         Sij   test_sensi.animals_n</span></span>
+<span id="cb12-69"><a href="#cb12-69" tabindex="-1"></a><span class="co">#&gt; 24:         Sij test_sensi.test_origin</span></span>
+<span id="cb12-70"><a href="#cb12-70" tabindex="-1"></a><span class="co">#&gt; 25:         Sij      farms_n.animals_n</span></span>
+<span id="cb12-71"><a href="#cb12-71" tabindex="-1"></a><span class="co">#&gt; 26:         Sij    farms_n.test_origin</span></span>
+<span id="cb12-72"><a href="#cb12-72" tabindex="-1"></a><span class="co">#&gt; 27:         Sij  animals_n.test_origin</span></span>
+<span id="cb12-73"><a href="#cb12-73" tabindex="-1"></a><span class="co">#&gt;     sensitivity             parameters</span></span>
+<span id="cb12-74"><a href="#cb12-74" tabindex="-1"></a><span class="co">#&gt;          &lt;char&gt;                 &lt;char&gt;</span></span>
+<span id="cb12-75"><a href="#cb12-75" tabindex="-1"></a></span>
+<span id="cb12-76"><a href="#cb12-76" tabindex="-1"></a><span class="fu">plot</span>(sobol_sa)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">plot</span>(sobol_sa, <span class="at">order =</span> <span class="st">&quot;second&quot;</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p>First-order indices (<code>Si</code>) measure each input’s <em>main
+effect,</em> the share of output variance attributable to changing that
+input alone, averaged over uncertainty in all other inputs. Larger
+<code>Si</code> values indicate the model output is more sensitive to
+that factor. Here, <code>h_prev</code> is the dominant driver of
+variance, <code>test_origin</code> is the next most influential, and
+<code>w_prev</code> also contributes materially; <code>farms_n</code>
+and <code>animals_n</code> have smaller but non-zero effects, while
+<code>test_sensi</code> is negligible. Negative estimates can occur due
+to Monte Carlo error and should be interpreted as ~0 if the confidence
+interval overlaps 0. If important factors have wide CIs or many
+negatives appear, increase N (and/or bootstrap replicates) before
+interpreting small effects.</p>
+<p>Total-order indices (<code>Ti</code>) measure each input’s <em>total
+effect</em> on output variance, including its main effect plus all
+interaction effects with other inputs; <code>Ti</code> is therefore
+always at least as large as <code>Si</code> for the same parameter.</p>
+<p>Second-order indices (<code>Sij</code>) quantify interaction effects:
+how much variance is explained <em>only</em> by varying two inputs
+together beyond what their individual first-order effects
+(<code>Si</code>) explain. Values near 0 indicate little interaction;
+larger values indicate the combined effect of the pair is important
+(e.g., <code>h_prev.test_origin</code> suggests a meaningful interaction
+between <code>h_prev</code> and <code>test_origin</code>).</p>
+</div>
+<div id="other-methods" class="section level2">
+<h2>Other methods</h2>
+<p>You can use other sensitivity methods with <code>mcmodule</code> as
+long as you can build a table/matrix of input values to run the model
+with, and collect the corresponding model output(s). For example,
+<code>sensitivity::fast99()</code> can estimate first-order
+variance-based indices with structured sampling and can be cheaper than
+second-order Sobol, depending on the design and number of factors. If
+you want a more familiar “risk-factor style” summary, regression/ANOVA
+approaches can quantify how the output changes as inputs change. Tools
+such as Shapley values (<code>iml::shapley()</code>) can help interpret
+complex, nonlinear relationships, but they answer a slightly different
+question and can be computationally heavy. The best method will depend
+on your model, computational resources, and the specific questions you
+want to answer about input importance.</p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

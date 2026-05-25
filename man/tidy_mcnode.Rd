@@ -41,6 +41,7 @@ A long data frame with columns:
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Converts an mcnode to long format suitable for ggplot2 and tidyverse analysis.
 Each row represents one uncertainty iteration for one variate.
 }

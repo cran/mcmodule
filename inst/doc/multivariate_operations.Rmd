@@ -24,8 +24,6 @@ knitr::opts_chunk$set(
 library(mcmodule)
 ```
 
-> *Work in progress!* 🏗
-
 # Element-wise operations {#sec-element-wise-operations}
 
 Most operations in this model are element-wise, meaning each calculation occurs independently on matching elements across nodes. These operations preserve node dimensions while applying functions (such as multiplication or addition) to corresponding elements, allowing uncertainties and variates to propagate through the calculations.
@@ -156,13 +154,13 @@ In `imports_mcmodule`, we have the probability that an infected animal from an i
 # Single-level trial
 imports_mcmodule <- trial_totals(
   mcmodule = imports_mcmodule,
-  mc_names = "no_detect_a", # trial_p
+  mc_names = "no_detect", # trial_p
   trials_n = "animals_n",
   mctable = imports_mctable
 )
 
 # Probability that at least one infected animal from an infected farm is not detected
-mc_summary(imports_mcmodule,"no_detect_a_set")[,-1]
+mc_summary(imports_mcmodule,"no_detect_set")[,-1]
 ```
 
 ## Multilevel trials
@@ -197,7 +195,7 @@ When considering animals (`trials_n`) from different farms (`subset_n`, we must 
 # Simple multilevel trial
 imports_mcmodule <- trial_totals(
   mcmodule = imports_mcmodule,
-  mc_names = "no_detect_a", # trial_p
+  mc_names = "no_detect", # trial_p
   trials_n = "animals_n",
   subsets_n = "farms_n",
   subsets_p = "h_prev",
@@ -205,7 +203,7 @@ imports_mcmodule <- trial_totals(
 )
 
 # Probability that at least one infected animal from at least one farm is not detected
-mc_summary(imports_mcmodule,"no_detect_a_set", digits=2)[,-1]
+mc_summary(imports_mcmodule,"no_detect_set", digits=2)[,-1]
 
 ```
 

@@ -4,7 +4,7 @@
 \alias{keys_match}
 \title{Match and Align Keys Between Datasets}
 \usage{
-keys_match(x, y, keys_names = NULL)
+keys_match(x, y, keys_names = NULL, match_scenario = TRUE)
 }
 \arguments{
 \item{x}{First dataset containing keys to match}
@@ -12,6 +12,9 @@ keys_match(x, y, keys_names = NULL)
 \item{y}{Second dataset containing keys to match}
 
 \item{keys_names}{Names of columns to use as matching keys. If NULL, uses common columns}
+
+\item{match_scenario}{(logical). If TRUE, exclude scenario_id from matching keys.
+If FALSE, include scenario_id. Default: TRUE.}
 }
 \value{
 A list containing:

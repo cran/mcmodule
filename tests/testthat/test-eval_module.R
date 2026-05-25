@@ -32,7 +32,7 @@ suppressMessages({
     exp_list <- list(
       imports = imports_exp,
       additional = quote({
-        final_result <- no_detect_a * 2
+        final_result <- no_detect * 2
       })
     )
 
@@ -47,7 +47,7 @@ suppressMessages({
     expect_equal(names(multi_result$exp), c("imports", "additional"))
 
     # Check that variables from first module are available in second
-    expect_true("no_detect_a" %in% names(multi_result$node_list))
+    expect_true("no_detect" %in% names(multi_result$node_list))
     expect_true("final_result" %in% names(multi_result$node_list))
 
     # Check that inputs have the right metadata
@@ -65,19 +65,19 @@ suppressMessages({
 
     # Check that outputs have the right metadata
     expect_equal(
-      multi_result$node_list$no_detect_a$keys,
+      multi_result$node_list$no_detect$keys,
       c("pathogen", "origin")
     )
     expect_equal(
-      multi_result$node_list$no_detect_a$inputs,
-      c("false_neg_a", "no_test_a")
+      multi_result$node_list$no_detect$inputs,
+      c("false_neg", "no_test")
     )
 
     expect_equal(
       multi_result$node_list$final_result$keys,
       c("pathogen", "origin")
     )
-    expect_equal(multi_result$node_list$final_result$inputs, c("no_detect_a"))
+    expect_equal(multi_result$node_list$final_result$inputs, c("no_detect"))
   })
 
   test_that("eval_module gets previous nodes", {
@@ -91,7 +91,7 @@ suppressMessages({
 
     previous_module <- trial_totals(
       previous_module,
-      mc_names = "no_detect_a",
+      mc_names = "no_detect",
       trials_n = "animals_n",
       subsets_n = "farms_n",
       subsets_p = "h_prev",
@@ -121,11 +121,10 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_baseline = c(NA_character_),
       sensi_variation = c(NA_character_)
     )
     current_exp <- quote({
-      imported_contaminated <- no_detect_a_set * survival_p
+      imported_contaminated <- no_detect_set * survival_p
     })
 
     current_module <- eval_module(
@@ -140,15 +139,15 @@ suppressMessages({
 
     combined_module <- at_least_one(
       combined_module,
-      c("no_detect_a", "imported_contaminated"),
+      c("no_detect", "imported_contaminated"),
       name = "total"
     )
 
     expect_equal(
-      combined_module$node_list$no_detect_a$keys,
+      combined_module$node_list$no_detect$keys,
       c("pathogen", "origin")
     )
-    summary1 <- mc_summary(combined_module, "no_detect_a_set")
+    summary1 <- mc_summary(combined_module, "no_detect_set")
     expect_equal(summary1$pathogen, c("a", "a", "a", "b", "b", "b"))
 
     expect_equal(
@@ -234,13 +233,12 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_baseline = c(NA_character_),
       sensi_variation = c(NA_character_)
     )
 
     # Test expression
     transmission_exp <- quote({
-      infection_risk <- no_detect_a * inf_dc
+      infection_risk <- no_detect * inf_dc
     })
 
     # Evaluate module with previous module
@@ -253,7 +251,7 @@ suppressMessages({
     )
 
     # Verify dimensions
-    expect_equal(dim(result_module$node_list$no_detect_a$mcnode)[3], 6)
+    expect_equal(dim(result_module$node_list$no_detect$mcnode)[3], 6)
     expect_equal(dim(result_module$node_list$infection_risk$mcnode)[3], 6)
 
     # Verify keys are correctly combined
@@ -265,7 +263,7 @@ suppressMessages({
     # Verify input tracking
     expect_equal(
       result_module$node_list$infection_risk$inputs,
-      c("no_detect_a", "inf_dc")
+      c("no_detect", "inf_dc")
     )
 
     # Verify no null matches in the dimension matching process
@@ -295,19 +293,18 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_baseline = c(NA_character_),
       sensi_variation = c(NA_character_)
     )
     # Get previous module
     imports_mcmodule <- agg_totals(
       imports_mcmodule,
-      "no_detect_a",
+      "no_detect",
       agg_keys = "pathogen"
     )
 
     # Test expression
     transmission_exp <- quote({
-      infection_risk <- no_detect_a_agg * inf_dc
+      infection_risk <- no_detect_agg * inf_dc
     })
 
     # Evaluate module with previous module
@@ -321,8 +318,8 @@ suppressMessages({
     )
 
     # Verify dimensions
-    expect_equal(dim(imports_mcmodule$node_list$no_detect_a$mcnode)[3], 6)
-    expect_equal(dim(result_module$node_list$no_detect_a_agg$mcnode)[3], 2)
+    expect_equal(dim(imports_mcmodule$node_list$no_detect$mcnode)[3], 6)
+    expect_equal(dim(result_module$node_list$no_detect_agg$mcnode)[3], 2)
     expect_equal(dim(result_module$node_list$infection_risk$mcnode)[3], 3)
 
     # Verify keys are correctly combined
@@ -331,7 +328,7 @@ suppressMessages({
     # Verify input tracking
     expect_equal(
       result_module$node_list$infection_risk$inputs,
-      c("no_detect_a_agg", "inf_dc")
+      c("no_detect_agg", "inf_dc")
     )
 
     # Verify no null matches in the dimension matching process
@@ -362,13 +359,12 @@ suppressMessages({
       mc_func = c(NA),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_baseline = c(NA_character_),
       sensi_variation = c(NA_character_)
     )
 
     # Test expression
     contamination_exp <- quote({
-      introduction_risk <- no_detect_a * contaminated
+      introduction_risk <- no_detect * contaminated
     })
 
     # Evaluate module with previous module
@@ -403,7 +399,7 @@ suppressMessages({
     # Verify input tracking
     expect_equal(
       result_custom$node_list$introduction_risk$inputs,
-      c("no_detect_a", "contaminated")
+      c("no_detect", "contaminated")
     )
 
     # Verify no null matches in the dimension matching process
@@ -430,7 +426,6 @@ suppressMessages({
       mc_func = c("runif"),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_baseline = c(NA_character_),
       sensi_variation = c(NA_character_)
     )
 
@@ -522,7 +517,6 @@ suppressMessages({
       mc_func = NA,
       from_variable = NA,
       transformation = NA,
-      sensi_baseline = NA_character_,
       sensi_variation = NA_character_
     )
 
@@ -569,6 +563,10 @@ suppressMessages({
       result <- external_input * 2
     })
 
+    reset_mctable()
+
+    # When mctable is not provided, eval_module reports that inputs are created
+    # from data.
     expect_message(
       result_mcmodule <- eval_module(
         exp = c(test = test_exp),
@@ -595,7 +593,6 @@ suppressMessages({
       mc_func = c(NA),
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_baseline = c(NA_character_),
       sensi_variation = c(NA_character_),
       stringsAsFactors = FALSE
     )
@@ -613,6 +610,189 @@ suppressMessages({
     expect_true("external_input" %in% names(result_mcmodule$node_list))
     expect_true("result" %in% names(result_mcmodule$node_list))
     expect_true(is.mcnode(result_mcmodule$node_list$external_input$mcnode))
+  })
+
+  test_that("eval_module creates input nodes from sample_design without mctable and allows empty data", {
+    test_exp <- quote({
+      result <- input_a + input_b
+    })
+
+    reset_mctable()
+
+    X <- data.frame(
+      input_a = c(0.1, 0.2, 0.3, 0.4),
+      input_b = c(1, 2, 3, 4)
+    )
+
+    result_mcmodule <- eval_module(
+      exp = c(test = test_exp),
+      data = data.frame(),
+      sample_design = X
+    )
+
+    expect_equal(class(result_mcmodule), "mcmodule")
+    expect_true(result_mcmodule$node_list$input_a$from_sample_design)
+    expect_true(result_mcmodule$node_list$input_b$from_sample_design)
+    expect_null(result_mcmodule$node_list$input_a$data_name)
+    expect_null(result_mcmodule$node_list$input_b$data_name)
+    expect_equal(
+      dim(result_mcmodule$node_list$input_a$mcnode),
+      c(nrow(X), 1, 1)
+    )
+    expect_equal(
+      dim(result_mcmodule$node_list$input_b$mcnode),
+      c(nrow(X), 1, 1)
+    )
+    expect_equal(
+      as.numeric(result_mcmodule$node_list$input_a$mcnode[, 1, 1]),
+      X$input_a
+    )
+    expect_equal(
+      as.numeric(result_mcmodule$node_list$input_b$mcnode[, 1, 1]),
+      X$input_b
+    )
+
+    expect_no_error(
+      eval_module(
+        exp = c(test = test_exp),
+        data = NULL,
+        sample_design = X
+      )
+    )
+  })
+
+  test_that("eval_module uses global sample_design by default", {
+    reset_sample_design()
+    reset_mctable()
+
+    test_exp <- quote({
+      result <- input_a + input_b
+    })
+
+    X <- data.frame(
+      input_a = c(0.1, 0.2, 0.3),
+      input_b = c(1, 2, 3)
+    )
+
+    set_sample_design(X)
+
+    result_mcmodule <- eval_module(
+      exp = c(test = test_exp),
+      data = data.frame()
+    )
+
+    expect_true(result_mcmodule$node_list$input_a$from_sample_design)
+    expect_true(result_mcmodule$node_list$input_b$from_sample_design)
+
+    reset_sample_design()
+  })
+
+  test_that("eval_module enforces input ndvar compatibility when sample_design is used", {
+    test_data <- data.frame(
+      other_min = 0.2,
+      other_max = 0.4
+    )
+
+    test_mctable <- data.frame(
+      mcnode = c("input_a", "other"),
+      mc_func = c(NA, "runif"),
+      description = c("A", "Other"),
+      from_variable = c(NA, NA),
+      sample_space = c(NA_character_, NA_character_),
+      transformation = c(NA, NA),
+      sensi_variation = c(NA_character_, NA_character_),
+      stringsAsFactors = FALSE
+    )
+
+    test_exp <- quote({
+      result <- input_a * other
+    })
+
+    X <- data.frame(
+      input_a = c(0.1, 0.2, 0.3, 0.4, 0.5),
+      other = c(0.2, 0.3, 0.4, 0.5, 0.6)
+    )
+
+    result_mcmodule <- eval_module(
+      exp = c(test = test_exp),
+      data = test_data,
+      mctable = test_mctable,
+      sample_design = X
+    )
+
+    expect_equal(
+      dim(result_mcmodule$node_list$input_a$mcnode),
+      c(nrow(X), 1, 1)
+    )
+    expect_equal(dim(result_mcmodule$node_list$other$mcnode)[1], nrow(X))
+    # Because 'other' is provided as a column in sample_design, it is treated
+    # as coming from sample_design.
+    expect_true(isTRUE(result_mcmodule$node_list$other$from_sample_design))
+    expect_null(result_mcmodule$node_list$other$data_name)
+  })
+
+  test_that("eval_module keeps type 0 nodes at original dimension with sample_design", {
+    test_data <- data.frame(
+      fixed_value = 2
+    )
+
+    test_mctable <- data.frame(
+      mcnode = c("input_a", "fixed_value"),
+      mc_func = c(NA, NA),
+      description = c("A", "Fixed"),
+      from_variable = c(NA, NA),
+      sample_space = c(NA_character_, NA_character_),
+      transformation = c(NA, NA),
+      sensi_variation = c(NA_character_, NA_character_),
+      stringsAsFactors = FALSE
+    )
+
+    test_exp <- quote({
+      result <- input_a * fixed_value
+    })
+
+    X <- data.frame(input_a = c(0.1, 0.2, 0.3, 0.4))
+
+    # When sample_design is provided, inputs not present as columns must be
+    # either provided in sample_design or have numeric bounds in sample_space.
+    expect_error(
+      eval_module(
+        exp = c(test = test_exp),
+        data = test_data,
+        mctable = test_mctable,
+        sample_design = X
+      ),
+      "Input 'fixed_value' is missing from sample_design and has no numeric bounds in mctable\\$sample_space"
+    )
+  })
+
+  test_that("eval_module errors when sample_design misses required inputs and data is empty", {
+    test_exp <- quote({
+      result <- input_a + input_b
+    })
+
+    test_mctable <- data.frame(
+      mcnode = c("input_a", "input_b"),
+      mc_func = c(NA, NA),
+      description = c("A", "B"),
+      from_variable = c(NA, NA),
+      sample_space = c(NA_character_, NA_character_),
+      transformation = c(NA, NA),
+      sensi_variation = c(NA_character_, NA_character_),
+      stringsAsFactors = FALSE
+    )
+
+    X <- data.frame(input_a = c(0.1, 0.2, 0.3))
+
+    expect_error(
+      eval_module(
+        exp = c(test = test_exp),
+        data = data.frame(),
+        mctable = test_mctable,
+        sample_design = X
+      ),
+      "Input 'input_b' is missing from sample_design and has no numeric bounds in mctable\\$sample_space"
+    )
   })
 
   test_that("eval_module deals with mcdata() and mcstoc() functions", {
@@ -636,7 +816,6 @@ suppressMessages({
       stringsAsFactors = FALSE,
       from_variable = c(NA),
       transformation = c(NA),
-      sensi_baseline = c(NA_character_),
       sensi_variation = c(NA_character_)
     )
 
@@ -658,23 +837,34 @@ suppressMessages({
     )
   })
 
-  test_that("eval_module works with use_baseline parameter", {
-    # Test basic use_baseline functionality
-    result_baseline <- eval_module(
-      exp = c(imports = imports_exp),
-      data = imports_data,
-      mctable = imports_mctable,
-      data_keys = imports_data_keys,
-      use_baseline = c("h_prev", "w_prev")
+  test_that("eval_module removes inline nvariates when sample_design is provided", {
+    test_exp <- quote({
+      input_b <- mcdata(data = 0.5, type = "0")
+      input_c <- mcstoc(runif, min = 0, max = 1)
+      input_d <- 5
+      result <- input_b + input_c + sample_a + input_d
+    })
+
+    sample_design <- data.frame(sample_a = c(0.1, 0.2, 0.3))
+
+    result_mcmodule <- eval_module(
+      exp = c(test = test_exp),
+      data = data.frame(),
+      sample_design = sample_design
     )
 
-    # Verify it created an mcmodule
-    expect_equal(class(result_baseline), "mcmodule")
-    expect_true("inf_a" %in% names(result_baseline$node_list))
-
-    # Verify mcnodes were created successfully
-    expect_true(is.mcnode(result_baseline$node_list$inf_a$mcnode))
-    expect_true(is.mcnode(result_baseline$node_list$w_prev$mcnode))
+    expect_equal(dim(result_mcmodule$node_list$input_b$mcnode), c(1, 1, 1))
+    expect_equal(
+      dim(result_mcmodule$node_list$input_c$mcnode),
+      c(nrow(sample_design), 1, 1)
+    )
+    expect_equal(
+      dim(result_mcmodule$node_list$result$mcnode),
+      c(nrow(sample_design), 1, 1)
+    )
+    expect_true(result_mcmodule$node_list$input_b$created_in_exp)
+    expect_true(is.null(result_mcmodule$node_list$input_b$from_sample_design))
+    expect_true(result_mcmodule$node_list$result$from_sample_design)
   })
 
   test_that("eval_module works with use_variation parameter", {
@@ -689,30 +879,11 @@ suppressMessages({
 
     # Verify it created an mcmodule
     expect_equal(class(result_variation), "mcmodule")
-    expect_true("inf_a" %in% names(result_variation$node_list))
+    expect_true("infected" %in% names(result_variation$node_list))
 
     # Verify mcnodes were created with variation applied
-    expect_true(is.mcnode(result_variation$node_list$inf_a$mcnode))
+    expect_true(is.mcnode(result_variation$node_list$infected$mcnode))
     expect_true(is.mcnode(result_variation$node_list$test_sensi$mcnode))
-  })
-
-  test_that("eval_module works with both use_baseline and use_variation", {
-    # Test combined use_baseline and use_variation on same node
-    result_combined <- eval_module(
-      exp = c(imports = imports_exp),
-      data = imports_data,
-      mctable = imports_mctable,
-      data_keys = imports_data_keys,
-      use_baseline = c("h_prev"),
-      use_variation = c("h_prev")
-    )
-
-    # Verify it created an mcmodule
-    expect_equal(class(result_combined), "mcmodule")
-    expect_true("inf_a" %in% names(result_combined$node_list))
-
-    # Verify mcnodes were created
-    expect_true(is.mcnode(result_combined$node_list$inf_a$mcnode))
   })
 
   test_that("eval_module handles NULL defaults for OAT parameters", {
@@ -722,12 +893,207 @@ suppressMessages({
       data = imports_data,
       mctable = imports_mctable,
       data_keys = imports_data_keys,
-      use_baseline = NULL,
       use_variation = NULL
     )
 
     expect_equal(class(result_null_defaults), "mcmodule")
-    expect_true("inf_a" %in% names(result_null_defaults$node_list))
-    expect_true(is.mcnode(result_null_defaults$node_list$inf_a$mcnode))
+    expect_true("infected" %in% names(result_null_defaults$node_list))
+    expect_true(is.mcnode(result_null_defaults$node_list$infected$mcnode))
+  })
+
+  test_that("eval_module works with mcnode_na_rm() in expressions", {
+    # Create test data with values that could produce NA or Inf
+    test_data <- data.frame(
+      category = c("a", "b", "c"),
+      input_min = c(0.1, 0.2, 0.3),
+      input_max = c(0.2, 0.3, 0.4),
+      divisor = c(1, 0, 2) # zero will create Inf
+    )
+
+    test_mctable <- data.frame(
+      mcnode = c("input"),
+      mc_func = c("runif"),
+      description = c("Test input"),
+      from_variable = c(NA),
+      transformation = c(NA),
+      sensi_variation = c(NA_character_),
+      stringsAsFactors = FALSE
+    )
+
+    test_data_keys <- list(
+      test_data = list(
+        cols = c("category", "input_min", "input_max", "divisor"),
+        keys = c("category")
+      )
+    )
+
+    # Expression that uses mcnode_na_rm to handle potential NA/Inf
+    test_exp <- quote({
+      ratio <- input / divisor
+      # Clean the ratio by replacing NA/Inf with 0
+      clean_ratio <- mcnode_na_rm(ratio)
+      # Use cleaned ratio in further calculations
+      result <- clean_ratio * 10
+    })
+
+    result_module <- eval_module(
+      exp = c(test = test_exp),
+      data = test_data,
+      mctable = test_mctable,
+      data_keys = test_data_keys
+    )
+
+    # Verify module was created
+    expect_equal(class(result_module), "mcmodule")
+    expect_true("clean_ratio" %in% names(result_module$node_list))
+    expect_true("result" %in% names(result_module$node_list))
+
+    # Verify clean_ratio has no NA or Inf values
+    clean_ratio_mcnode <- result_module$node_list$clean_ratio$mcnode
+    expect_false(any(is.na(clean_ratio_mcnode)))
+    expect_false(any(is.infinite(clean_ratio_mcnode)))
+
+    # Verify result also has no NA or Inf
+    result_mcnode <- result_module$node_list$result$mcnode
+    expect_false(any(is.na(result_mcnode)))
+    expect_false(any(is.infinite(result_mcnode)))
+  })
+
+  test_that("eval_module works with mcnode_na_rm() with custom na_value", {
+    # Create test data
+    test_data <- data.frame(
+      id = c("x", "y"),
+      value_a = c(1, 2),
+      value_b = c(0, 3) # zero will create Inf when used as divisor
+    )
+
+    # Expression using mcnode_na_rm with custom replacement value
+    test_exp <- quote({
+      ratio <- value_a / value_b
+      # Replace Inf with -999 instead of default 0
+      clean_ratio <- mcnode_na_rm(ratio, na_value = -999)
+    })
+
+    result_module <- eval_module(
+      exp = c(test = test_exp),
+      data = test_data
+    )
+
+    # Verify the custom replacement value was used
+    clean_ratio_mcnode <- result_module$node_list$clean_ratio$mcnode
+    expect_false(any(is.infinite(clean_ratio_mcnode)))
+
+    # Check that Inf was replaced with -999
+    expect_true(any(clean_ratio_mcnode == -999))
+  })
+
+  test_that("eval_module works with mcnode_null_rm() in expressions", {
+    # Create test data
+    test_data <- data.frame(
+      category = c("a", "b"),
+      base_value = c(0.5, 0.8)
+    )
+
+    # Expression that uses mcnode_null_rm to handle potentially missing nodes
+    test_exp <- quote({
+      result <- base_value * mcnode_null_rm(optional_node, null_value = 1)
+    })
+
+    result_module <- eval_module(
+      exp = c(test = test_exp),
+      data = test_data
+    )
+
+    # Verify module was created
+    expect_equal(class(result_module), "mcmodule")
+    expect_true("result" %in% names(result_module$node_list))
+
+    # Verify result uses the default value (1)
+    result_mcnode <- result_module$node_list$result$mcnode
+    expect_equal(as.numeric(result_mcnode), test_data$base_value)
+  })
+
+  test_that("eval_module ignores missing prev_nodes flagged with null_rm", {
+    test_data <- data.frame(
+      category = c("a", "b"),
+      base_value_min = c(2, 3),
+      base_value_max = c(3, 4)
+    )
+
+    test_mctable <- data.frame(
+      mcnode = c("base_value"),
+      mc_func = c("runif"),
+      description = c("Base value"),
+      from_variable = c(NA),
+      transformation = c(NA),
+      sensi_variation = c(NA_character_),
+      stringsAsFactors = FALSE
+    )
+
+    test_data_keys <- list(
+      test_data = list(
+        cols = c("category", "base_value_min", "base_value_max", "base_value"),
+        keys = c("category")
+      )
+    )
+
+    test_exp <- quote({
+      result <- base_value * mcnode_null_rm(missing_prev_node, null_value = 1)
+    })
+
+    expect_no_error(
+      result_module <- eval_module(
+        exp = c(test = test_exp),
+        data = test_data,
+        mctable = test_mctable,
+        data_keys = test_data_keys,
+        prev_mcmodule = list(
+          list(
+            data = list(),
+            node_list = structure(list(), class = "mcnode_list")
+          ) |>
+            structure(class = "mcmodule")
+        )
+      )
+    )
+
+    expect_true("result" %in% names(result_module$node_list))
+    expect_false("missing_prev_node" %in% names(result_module$node_list))
+    expect_equal(
+      "missing_prev_node",
+      result_module$node_list$result$null_rm_inputs
+    )
+  })
+
+  test_that("eval_module works with mcnode_null_rm() returning existing node", {
+    # Create test data
+    test_data <- data.frame(
+      category = c("x", "y", "z"),
+      factor_value = c(2, 3, 4)
+    )
+
+    # Expression where mcnode_null_rm returns the existing node
+    test_exp <- quote({
+      existing_node <- mcdata(c(0.1, 0.2, 0.3), type = "0")
+      # mcnode_null_rm should return the existing node unchanged
+      safe_node <- mcnode_null_rm(existing_node)
+      # Use it in calculations
+      result <- factor_value * safe_node
+    })
+
+    result_module <- eval_module(
+      exp = c(test = test_exp),
+      data = test_data
+    )
+
+    # Verify both nodes exist
+    expect_true("existing_node" %in% names(result_module$node_list))
+    expect_true("safe_node" %in% names(result_module$node_list))
+    expect_true("result" %in% names(result_module$node_list))
+
+    # Verify safe_node equals existing_node
+    existing_mcnode <- result_module$node_list$existing_node$mcnode
+    safe_mcnode <- result_module$node_list$safe_node$mcnode
+    expect_equal(safe_mcnode, existing_mcnode)
   })
 })

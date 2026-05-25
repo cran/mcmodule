@@ -18,6 +18,7 @@ A list with: \code{n_mcnodes} (count), \code{n_variate} (variate count),
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Validates that all mcnodes in a module have compatible dimensions for
 sensitivity analysis by checking uncertainty and variate dimensions.
 }

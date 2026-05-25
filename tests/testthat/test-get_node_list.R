@@ -183,6 +183,41 @@ suppressMessages({
     expect_equal(node_list$output_4$inputs, c("output_3", "level"))
   })
 
+  test_that("get_node_list sets null_rm on in_nodes wrapped by mcnode_null_rm", {
+    test_exp <- quote({
+      output_1 <- mcnode_null_rm(input_a, null_value = 0)
+      output_2 <- mcnode_na_rm(output_1, 0)
+    })
+
+    test_mctable <- data.frame(
+      mcnode = c("input_a"),
+      mc_func = c("runif"),
+      description = c("Test input A"),
+      stringsAsFactors = FALSE
+    )
+
+    test_data_keys <- list(
+      test_data = list(
+        cols = c("x", "input_a_min", "input_a_max"),
+        keys = c("x")
+      )
+    )
+
+    node_list <- get_node_list(
+      exp = test_exp,
+      mctable = test_mctable,
+      data_keys = test_data_keys
+    )
+
+    expect_true("input_a" %in% names(node_list))
+    expect_equal(node_list$input_a$type, "in_node")
+    expect_true(isTRUE(node_list$input_a$null_rm))
+
+    expect_true("output_2" %in% names(node_list))
+    expect_equal(node_list$output_2$type, "out_node")
+    expect_true(isTRUE(node_list$output_2$na_rm))
+  })
+
   test_that("get_node_list works with functions with naming conflicts", {
     exp <- c("something", "called", "exp", "not", "a", "function")
 
@@ -231,6 +266,41 @@ suppressMessages({
     expect_equal(node_list$output_4$inputs, c("output_3", "level"))
   })
 
+  test_that("get_node_list treats pkg::fn() like fn() for inputs", {
+    test_exp <- quote({
+      output_1 <- input_a + 1
+      output_2 <- stats::pnorm(output_1)
+      output_3 <- base::exp(output_2)
+      output_4 <- output_3 + prev_value
+    })
+
+    test_mctable <- data.frame(
+      mcnode = c("input_a"),
+      mc_func = c("runif"),
+      description = c("Test input A"),
+      stringsAsFactors = FALSE
+    )
+
+    node_list <- get_node_list(
+      exp = test_exp,
+      mctable = test_mctable,
+      data_keys = list(
+        test_data = list(
+          cols = c("input_a_min", "input_a_max"),
+          keys = character()
+        )
+      )
+    )
+
+    expect_true(node_list$output_2$function_call)
+    expect_true(node_list$output_3$function_call)
+    expect_equal(node_list$output_2$inputs, c("output_1"))
+    expect_equal(node_list$output_3$inputs, c("output_2"))
+    expect_equal(node_list$output_4$inputs, c("output_3", "prev_value"))
+    expect_false("stats" %in% node_list$output_2$inputs)
+    expect_false("base" %in% node_list$output_3$inputs)
+  })
+
   test_that("get_node_list uses explicit keys and merges them with data_keys when present", {
     test_exp <- quote({
       result <- input_a * 2
@@ -273,8 +343,8 @@ suppressMessages({
 
   test_that("get_node_list deals with mcdata() and mcstoc() functions", {
     test_exp1 <- quote({
-      input_b <- mcdata(data=c(0.5, 1.5, 2.5))
-      result <- mcstoc(rnorm, mean= input_b, sd=input_a)
+      input_b <- mcdata(data = c(0.5, 1.5, 2.5))
+      result <- mcstoc(rnorm, mean = input_b, sd = input_a)
     })
 
     test_mctable <- data.frame(
@@ -288,25 +358,33 @@ suppressMessages({
       exp = test_exp1,
       mctable = test_mctable
     )
-    
+
     expect_true(node_list1$result$function_call)
     expect_true(node_list1$result$created_in_exp)
-    expect_equal(node_list1$result$inputs, c("input_b","input_a"))
+    expect_equal(node_list1$result$inputs, c("input_b", "input_a"))
     expect_equal(node_list1$input_b$type, c("out_node"))
 
     # Test error when nvariate is provided
     test_exp2 <- quote({
-      input_b <- mcdata(data=c(0.5, 1.5, 2.5), type = "0", nvariates=3)
-      result <- mcstoc(rnorm, mean= input_b, sd=input_a, type = "V", nvariates=3)
+      input_b <- mcdata(data = c(0.5, 1.5, 2.5), type = "0", nvariates = 3)
+      result <- mcstoc(
+        rnorm,
+        mean = input_b,
+        sd = input_a,
+        type = "V",
+        nvariates = 3
+      )
     })
 
-    expect_error({
-    node_list2 <- get_node_list(
-      exp = test_exp2,
-      mctable = test_mctable
+    expect_error(
+      {
+        node_list2 <- get_node_list(
+          exp = test_exp2,
+          mctable = test_mctable
+        )
+      },
+      "Remove 'nvariates' argument"
     )
-    }, "Remove 'nvariates' argument")
-
   })
 
   test_that("get_node_list requires a quoted { } expression", {
@@ -361,5 +439,4 @@ suppressMessages({
     expect_true(node_list_vu$final$created_in_exp)
     expect_true("input_c" %in% names(node_list_vu))
   })
-
 })

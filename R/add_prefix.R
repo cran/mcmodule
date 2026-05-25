@@ -60,15 +60,25 @@ add_prefix <- function(mcmodule, prefix = NULL, rewrite_module = NULL) {
   }
 
   # Handle module rewriting if specified
+  nodes_to_reprefix <- NULL
   if (!is.null(rewrite_module)) {
+    # Identify nodes that start with rewrite_module prefix
+    old_prefix_pattern <- paste0("^", rewrite_module, "_")
+    nodes_to_rewrite <- grep(old_prefix_pattern, node_names)
+    inputs_to_rewrite <- grep(old_prefix_pattern, inputs)
+
     # Rename module
     node_module[node_module %in% rewrite_module] <- prefix
     node_exp[node_exp %in% rewrite_module] <- prefix
     inputs_module[inputs_module %in% rewrite_module] <- prefix
     inputs_exp[inputs_exp %in% rewrite_module] <- prefix
 
-    # Remove prefix
-    node_names <- gsub(paste0(rewrite_module, "_"), "", node_names)
+    # Remove prefix from identified nodes
+    node_names[nodes_to_rewrite] <- gsub(
+      paste0(rewrite_module, "_"),
+      "",
+      node_names[nodes_to_rewrite]
+    )
     names(node_module) <- gsub(
       paste0(rewrite_module, "_"),
       "",
@@ -78,6 +88,11 @@ add_prefix <- function(mcmodule, prefix = NULL, rewrite_module = NULL) {
       paste0(rewrite_module, "_"),
       "",
       names(node_exp)
+    )
+    inputs[inputs_to_rewrite] <- gsub(
+      paste0(rewrite_module, "_"),
+      "",
+      inputs[inputs_to_rewrite]
     )
     names(inputs_module) <- gsub(
       paste0(rewrite_module, "_"),
@@ -89,6 +104,9 @@ add_prefix <- function(mcmodule, prefix = NULL, rewrite_module = NULL) {
       "",
       names(inputs_exp)
     )
+
+    # Store which nodes need re-prefixing after rewrite
+    nodes_to_reprefix <- nodes_to_rewrite
   }
 
   # Add prefix to node names
@@ -97,6 +115,11 @@ add_prefix <- function(mcmodule, prefix = NULL, rewrite_module = NULL) {
       exp_and_modules |
       node_exp[node_names] %in% exp_and_modules
   )
+
+  # Include nodes that were rewritten
+  if (!is.null(nodes_to_reprefix)) {
+    node_prefix_index <- unique(c(node_prefix_index, nodes_to_reprefix))
+  }
 
   node_names[node_prefix_index] <- paste0(
     prefix,

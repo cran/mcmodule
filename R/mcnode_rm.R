@@ -20,3 +20,28 @@
 mcnode_na_rm <- function(mcnode, na_value = 0) {
   replace(mcnode, is.na(mcnode) | is.infinite(mcnode), na_value)
 }
+
+#' Replace NULL mcnode object
+#'
+#' Replaces an mcnode that is not found in the data or in the previous module with a specified value.
+#'
+#' @param mcnode An mcnode object containing NA or infinite values
+#' @param null_value Numeric value to replace NA and infinite values (default = 0)
+#'
+#' @return The mcnode if is found, otherwise the null_value
+#'
+#' @examples
+#' mcnode_null_rm(unexisting_mcnode)
+#'
+#' @export
+mcnode_null_rm <- function(mcnode, null_value = 0) {
+  if (missing(mcnode)) {
+    return(null_value)
+  } else if (!exists(deparse(substitute(mcnode)), envir = parent.frame())) {
+    return(null_value)
+  } else if (is.null(mcnode)) {
+    return(null_value)
+  } else {
+    return(mcnode)
+  }
+}

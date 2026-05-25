@@ -68,6 +68,9 @@ get_node_list <- function(
     if (parse_res$function_call) {
       out_node_list[[node_name]][["function_call"]] <- TRUE
     }
+    if (length(parse_res$null_rm_inputs) > 0) {
+      out_node_list[[node_name]][["null_rm_inputs"]] <- parse_res$null_rm_inputs
+    }
 
     # Collect node names and inputs
     all_nodes <- unique(c(all_nodes, inputs, node_name))
@@ -110,6 +113,13 @@ get_node_list <- function(
       return(NULL)
     })
   }
+
+  null_rm_inputs <- unique(unlist(lapply(out_node_list, function(x) {
+    if (!is.null(x[["null_rm_inputs"]])) {
+      return(x[["null_rm_inputs"]])
+    }
+    return(NULL)
+  })))
 
   if (length(input_nodes) > 0) {
     for (i in 1:length(input_nodes)) {
@@ -189,6 +199,10 @@ get_node_list <- function(
       in_node_list[[node_name]][["exp_name"]] <- exp_name
       in_node_list[[node_name]][["mc_name"]] <- node_name
 
+      if (node_name %in% null_rm_inputs) {
+        in_node_list[[node_name]][["null_rm"]] <- TRUE
+      }
+
       # If no inputs_col matched (no dataset matched) but explicit keys were provided, assign them
       if (is.null(in_node_list[[node_name]][["keys"]]) && !is.null(keys)) {
         if (!is.character(keys)) {
@@ -210,8 +224,9 @@ get_node_list <- function(
 
   # Process previous nodes
   prev_node_list <- list()
-  prev_nodes <- all_nodes[
-    !all_nodes %in% c(names(in_node_list), names(out_node_list))
+  all_nodes_prev <- all_nodes[!all_nodes %in% names(out_node_list)]
+  prev_nodes <- all_nodes_prev[
+    !all_nodes_prev %in% c(names(in_node_list), names(out_node_list))
   ]
 
   if (length(prev_nodes) > 0) {
@@ -220,6 +235,11 @@ get_node_list <- function(
       is_fun <- if (exists(node_name)) is.function(get(node_name)) else FALSE
       if (!is_fun) {
         prev_node_list[[node_name]][["type"]] <- "prev_node"
+
+        # Set null_rm flag if this prev_node is wrapped in mcnode_null_rm()
+        if (node_name %in% null_rm_inputs) {
+          prev_node_list[[node_name]][["null_rm"]] <- TRUE
+        }
       }
     }
   }
@@ -259,7 +279,8 @@ get_node_list <- function(
 #'   - created_in_exp: logical; TRUE if mcstoc or mcdata was used in the expression
 #'   - mc_func: character or NULL; sampling function name detected for mcstoc/mcdata
 #'   - nvariates: logical; TRUE if a `nvariates` argument was present
-#'   - na_rm: logical; TRUE if `mcnode_na_rm` was used
+#'   - na_rm_inputs: character vector of symbol names passed to `mcnode_na_rm`
+#'   - null_rm: logical; TRUE if `mcnode_null_rm` was used
 #'   - function_call: logical; TRUE if any function calls were present
 #' @keywords internal
 #' @noRd
@@ -272,6 +293,7 @@ ast_traverse <- function(expr_text) {
       mc_func = NULL,
       nvariates = FALSE,
       na_rm = FALSE,
+      null_rm_inputs = character(),
       function_call = FALSE,
       unsupported_types = character()
     ))
@@ -283,6 +305,7 @@ ast_traverse <- function(expr_text) {
   mc_func <- NULL
   created_in_exp <- FALSE
   na_rm_flag <- FALSE
+  null_rm_inputs <- character()
   nvariates_flag <- FALSE
   function_call_flag <- FALSE
   unsupported_types <- character()
@@ -297,10 +320,21 @@ ast_traverse <- function(expr_text) {
     }
     if (is.call(e)) {
       function_call_flag <<- TRUE
-      fname <- if (is.symbol(e[[1]])) {
-        as.character(e[[1]])
+      call_head <- e[[1]]
+      fname <- if (is.symbol(call_head)) {
+        as.character(call_head)
       } else {
-        paste0(deparse(e[[1]]), collapse = "")
+        paste0(deparse(call_head), collapse = "")
+      }
+
+      if (is.call(call_head)) {
+        ns_op <- as.character(call_head[[1]])
+        if (ns_op %in% c("::", ":::")) {
+          pkg_name <- as.character(call_head[[2]])
+          fname_ns <- as.character(call_head[[3]])
+          function_names <<- c(function_names, pkg_name)
+          fname <- fname_ns
+        }
       }
 
       function_names <<- c(function_names, fname)
@@ -349,6 +383,13 @@ ast_traverse <- function(expr_text) {
         na_rm_flag <<- TRUE
       }
 
+      if (fname == "mcnode_null_rm" && length(e) >= 2) {
+        first_arg <- e[[2]]
+        if (is.symbol(first_arg)) {
+          null_rm_inputs <<- c(null_rm_inputs, as.character(first_arg))
+        }
+      }
+
       for (i in seq_along(e)[-1]) {
         traverse(e[[i]])
       }
@@ -368,6 +409,7 @@ ast_traverse <- function(expr_text) {
     mc_func = mc_func,
     nvariates = nvariates_flag,
     na_rm = na_rm_flag,
+    null_rm_inputs = unique(null_rm_inputs),
     function_call = function_call_flag,
     unsupported_types = unsupported_types
   )

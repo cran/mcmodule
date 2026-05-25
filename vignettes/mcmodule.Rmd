@@ -270,7 +270,7 @@ From now on we will use only the merged `imports_data` table. However, it is use
 
 -   `test_sensitivity` provided information by `"pathogen"` only
 
-The resulting merged table, `imports_data`, will therefore have two keys: `"pathogen"` and `"origin"`. However, not all parameters will use both keys, for example, `"test_sensi"` only has information by `"pathogen"`. Knowing the keys for each parameter is crucial when performing multivariate operations, such as [calculating totals](https://nataliaciria.com/mcmodule/articles/intro.html#calculating-totals).
+The resulting merged table, `imports_data`, will therefore have two keys: `"pathogen"` and `"origin"`. However, not all parameters will use both keys, for example, `"test_sensi"` only has information by `"pathogen"`. Knowing the keys for each parameter is crucial when performing multivariate operations, such as [calculating totals](https://nataliaciria.com/mcmodule/articles/mcmodule.html#calculating-totals).
 
 To make these relationships explicit in the model, we need to provide the data keys. These are defined in a list with one element for each input dataset, specifying both the columns and the keys for each dataset.
 
@@ -303,9 +303,9 @@ With values and keys established, we still need some information to build our st
 
 -   from_variable: Column name, if it comes from a column with a name different to the mcnode
 
--   transformation: Transformation to be applied to the original column values
+-   sample_space: Sampling domain used by `sample_design()` (for example `c(0, 1)` or `min = 0, max = 1`)
 
--   sensi_baseline: Parameters for baseline mock distribution [^2]
+-   transformation: Transformation to be applied to the original column values
 
 -   sensi_variation: OAT variation expression using `value` placeholder[^2]
 
@@ -334,7 +334,7 @@ For encoding categorical variables as mcnodes (or any other data transformation)
 
 ## Expressions
 
-Finally, we need to write the model's mathematical expression. These expressions should ideally include only arithmetic operations, not R functions (with some exceptions that will be covered later in "[tricks and tweaks](https://nataliaciria.com/mcmodule/articles/intro.html#tricks-and-tweaks)"). We'll wrap them using `quote()` so they aren't executed immediately but stored for later evaluation with `eval_model()`.
+Finally, we need to write the model's mathematical expression. These expressions should ideally include only arithmetic operations, not R functions (with some exceptions that will be covered later in "[tricks and tweaks](https://nataliaciria.com/mcmodule/articles/mcmodule.html#tricks-and-tweaks)"). We'll wrap them using `quote()` so they aren't executed immediately but stored for later evaluation with `eval_model()`.
 
 ```{r}
 imports_exp <- quote({
@@ -354,9 +354,9 @@ imports_exp <- quote({
 
 Starting with version 1.2.0, you can create mcnodes directly inside expressions using `mcstoc()` or `mcdata()` from the `mc2d` package. However, these functions do not behave exactly as they do in `mc2d` when used within `mcmodule`. Keep the following points in mind:
 
-- Do not set `nvariates`. It is automatically set to match the number of rows in your data.
-- Use `type = "V"` (variability, the default) or `type = "0"` (deterministic).
-- All other `mcstoc()` and `mcdata()` arguments behave as documented in `mc2d`.
+-   Do not set `nvariates`. It is automatically set to match the number of rows in your data.
+-   Use `type = "V"` (variability, the default) or `type = "0"` (deterministic).
+-   All other `mcstoc()` and `mcdata()` arguments behave as documented in `mc2d`.
 
 ```{r}
 # Example expression with mcnodes created on-the-fly
@@ -379,7 +379,6 @@ imports_exp_inline <- quote({
   no_detect <- false_neg + no_test
 })
 ```
-
 
 ## Evaluating an mcmodule
 
@@ -639,6 +638,21 @@ imports_wif <- imports_wif %>%
 imports_wif$node_list$no_detect_set_agg$summary
 ```
 
+Once scenario totals are available, we can directly compare each what-if scenario against baseline using `mc_compare()`. Here we compute the **relative risk reduction** in `no_detect_set_agg` for each pathogen:
+
+```{r}
+imports_wif <- mc_compare(
+  mcmodule = imports_wif,
+  mc_name = "no_detect_set_agg",
+  baseline = "0",
+  type = "relative_reduction",
+  name = "no_detect_set_rrr"
+)
+
+# Relative risk reduction by pathogen and scenario
+imports_wif$node_list$no_detect_set_rrr_compared$summary
+```
+
 # Working with multiple mcmodules
 
 As your risk analysis grows in complexity, you may need to split your model into several independent modules and then combine them.
@@ -754,6 +768,53 @@ converg_strict <- mcmodule_converg(
 )
 ```
 
+## Sensitivity analysis
+
+Sensitivity analysis quantifies how changes in inputs affect model outputs, helping to identify which uncertainties are most important for decision-relevant results. In `mcmodule`, you can perform sensitivity analysis using sample design-based methods such as Sobol indices for global sensitivity analysis. Other methods are described in the *Sensitivity analysis* vignette.
+
+### Sobol indices analysis
+
+Sobol analysis decomposes output variance into first-order and higher-order effects, providing a global sensitivity analysis. It identifies which inputs contribute most to output uncertainty and whether interactions between inputs are important.
+
+To perform Sobol analysis, first generate sampling matrices from your `mctable` definitions, then evaluate the module with these sample designs, and finally compute the indices:
+
+```{r}
+library(sensobol)
+
+# Generate Sobol sampling matrices from mctable
+N <- 1000  # Number of base samples
+X <- mctable_sobol_matrices(imports_mctable, N = N)
+
+# Evaluate the module with the Sobol sample design
+imports_sobol <- eval_module(
+  exp = c(imports = imports_exp),
+  data = NULL,
+  sample_design = X,
+  mctable = imports_mctable
+)
+
+# Calculate the target output
+imports_sobol <- trial_totals(
+  mcmodule = imports_sobol,
+  mc_names = c("no_detect"),
+  trials_n = "animals_n",
+  subsets_n = "farms_n",
+  subsets_p = "h_prev",
+  sample_design = X,
+  mctable = imports_mctable
+)
+
+# Extract output and compute Sobol indices
+y <- unmc(imports_sobol$node_list$no_detect_set_n$mcnode)
+sobol_sa <- sensobol::sobol_indices(Y = y, N = N, params = colnames(X))
+
+# View and plot results
+print(sobol_sa)
+plot(sobol_sa)
+```
+
+The first-order index (`Si`) quantifies each input's direct contribution to output variance, while the total-order index (`Ti`) captures total contribution including interactions. Inputs with large `Si` values are important drivers of output uncertainty and should be prioritized for data collection and uncertainty reduction.
+
 # Tricks and tweaks
 
 ## Handling missing and infinite values in mcnodes
@@ -818,7 +879,6 @@ h_prev
 ```{r}
 mc_summary(data = prevalence_region, mcnode = h_prev, keys_names = c("pathogen", "origin"))
 ```
-
 
 # Next steps
 
